@@ -46,8 +46,6 @@ export function TopBar({
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, [variant, solidAfter]);
-  const mins = observedAt ? Math.round((now - Date.parse(observedAt)) / 60_000) : null;
-  const old = stale || mins == null || mins > 20;
   return (
     <div className={`topbar ${solid ? "is-solid" : ""}`} id="top">
       <div className="wrap topbar__inner">
@@ -67,12 +65,6 @@ export function TopBar({
             </a>
           ))}
         </nav>
-        {observedAt !== undefined && (
-          <span className="live" title={observedAt ?? undefined}>
-            <span className={`live__dot ${old ? "is-stale" : ""}`} />
-            <span className="live__text">{mins == null ? "no station" : mins < 2 ? "live" : `${mins}m ago`}</span>
-          </span>
-        )}
         <AccountButton />
       </div>
     </div>
