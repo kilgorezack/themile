@@ -7,7 +7,7 @@ import { cardinal, fmt } from "@/lib/units";
 
 /**
  * /lite — the one-bar-of-signal page. Plain server-rendered HTML: no
- * JavaScript, no web fonts, no images. Unlinked and noindex.
+ * JavaScript, no web fonts, no images. Linked from the footer; noindex.
  */
 export const dynamic = "force-dynamic";
 

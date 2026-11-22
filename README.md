@@ -20,7 +20,7 @@ The page renders on the server (re-generated every 2 minutes) and the browser po
 
 ## Low-data page
 
-`/lite` is an unlinked, `noindex` backup for one-bar cell service: plain server-rendered HTML with no JavaScript, fonts or images (~1.5 KB gzipped). It shows current wind/air/pressure/flow, a lightning warning, the next 12 hours, three days, and light/solunar times. `/lite?auto` adds a 5-minute auto-refresh.
+`/lite` (linked from the footer, `noindex`) is a backup for one-bar cell service: plain server-rendered HTML with no JavaScript, fonts or images (~1.5 KB gzipped). It shows current wind/air/pressure/flow, a lightning warning, the next 12 hours, three days, and light/solunar times. `/lite?auto` adds a 5-minute auto-refresh.
 
 ## Environment variables (set in Vercel → Project → Settings → Environment Variables)
 
