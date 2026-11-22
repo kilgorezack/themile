@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -25,6 +26,7 @@ interface AuthState {
   openSignIn: () => void;
   closeSignIn: () => void;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   createAccount: (email: string, password: string, name?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -48,10 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const signInWithGoogle = useCallback(async () => {
+  const popupOrRedirect = useCallback(async (provider: GoogleAuthProvider | OAuthProvider) => {
     const auth = getAuth(firebaseApp());
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
     try {
       await signInWithPopup(auth, provider);
     } catch (e) {
@@ -65,6 +65,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    await popupOrRedirect(provider);
+  }, [popupOrRedirect]);
+
+  const signInWithApple = useCallback(async () => {
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    await popupOrRedirect(provider);
+  }, [popupOrRedirect]);
+
   const value = useMemo<AuthState>(
     () => ({
       user,
@@ -73,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       openSignIn: () => setDialogOpen(true),
       closeSignIn: () => setDialogOpen(false),
       signInWithGoogle,
+      signInWithApple,
       signInWithEmail: async (email, password) => {
         await signInWithEmailAndPassword(getAuth(firebaseApp()), email.trim(), password);
       },
@@ -91,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, loading, dialogOpen, signInWithGoogle, rev],
+    [user, loading, dialogOpen, signInWithGoogle, signInWithApple, rev],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -122,6 +136,10 @@ export function authErrorMessage(e: unknown) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
       return "";
+    case "auth/operation-not-allowed":
+      return "That sign-in method isn't turned on yet. Try another option.";
+    case "auth/account-exists-with-different-credential":
+      return "You already have an account with that email using a different sign-in method. Use that one.";
     case "auth/unauthorized-domain":
       return "This site's domain isn't authorized for sign-in yet (Firebase → Authentication → Settings → Authorized domains).";
     case "auth/network-request-failed":

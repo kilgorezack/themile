@@ -2076,6 +2076,26 @@ h3 {
 .authd__google:hover {
   border-color: var(--ink-3);
 }
+.authd__apple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  border-radius: 8px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  font: 600 15px var(--font-body), sans-serif;
+  cursor: pointer;
+}
+@media (prefers-color-scheme: dark) {
+  .authd__apple {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+}
 .authd__or {
   display: flex;
   align-items: center;

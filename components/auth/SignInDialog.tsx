@@ -6,7 +6,7 @@ import { authErrorMessage, useAuth } from "./AuthProvider";
 type Mode = "signin" | "create" | "reset";
 
 export function SignInDialog() {
-  const { dialogOpen, closeSignIn, signInWithGoogle, signInWithEmail, createAccount, resetPassword } = useAuth();
+  const { dialogOpen, closeSignIn, signInWithGoogle, signInWithApple, signInWithEmail, createAccount, resetPassword } = useAuth();
   const ref = useRef<HTMLDialogElement>(null);
   const [mode, setMode] = useState<Mode>("signin");
   const [name, setName] = useState("");
@@ -76,6 +76,15 @@ export function SignInDialog() {
                 <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
               </svg>
               Continue with Google
+            </button>
+            <button type="button" className="authd__apple" disabled={busy} onClick={() => run(signInWithApple)}>
+              <svg width="16" height="19" viewBox="0 0 814 1000" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M788 341c-6 4-108 62-108 190 0 148 130 200 134 202-1 3-21 71-69 141-43 61-87 122-156 122s-87-40-166-40c-77 0-104 41-167 41s-107-57-158-127C40 787 0 678 0 574c0-167 109-256 216-256 57 0 105 37 141 37 34 0 87-39 152-39 25 0 113 2 171 85zM548 157c27-32 46-76 46-120 0-6-1-12-2-17-44 2-96 29-127 65-25 28-48 72-48 117 0 7 1 13 2 16 3 0 7 1 12 1 39 0 89-27 117-62z"
+                />
+              </svg>
+              Continue with Apple
             </button>
             <div className="authd__or">
               <span>or with email</span>
