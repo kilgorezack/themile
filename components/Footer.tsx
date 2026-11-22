@@ -1,7 +1,6 @@
 import { MILE } from "@/lib/config";
 
 export function Footer({ source, fetchedAt }: { source: string | null; fetchedAt: string }) {
-  const weather = source === "tempest" ? "Tempest station" : source === "wunderground" ? "Weather Underground" : "National Weather Service";
   const updated = new Date(fetchedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: MILE.timezone });
   return (
     <footer className="footer">
@@ -23,7 +22,6 @@ export function Footer({ source, fetchedAt }: { source: string | null; fetchedAt
           <div>
             <div className="label">Data</div>
             <ul>
-              <li>{weather}</li>
               <li>
                 <a href="https://www.usbr.gov/gp/hydromet/" rel="noreferrer">USBR Hydromet</a>
               </li>

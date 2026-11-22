@@ -106,9 +106,21 @@ export function Sky({ now }: { now: number }) {
 
 
 /** Moon phase, rise/set and the solunar day rating. */
-export function MoonCard({ day, className = "panel", delay = 0 }: { day: SkyDay; className?: string; delay?: number }) {
+export function MoonCard({
+  day,
+  className = "panel",
+  delay = 0,
+  reveal = true,
+}: {
+  day: SkyDay;
+  className?: string;
+  delay?: number;
+  /** fade in on scroll (Conditions) or render immediately (Home) */
+  reveal?: boolean;
+}) {
+  const Wrap = reveal ? Reveal : PlainDiv;
   return (
-      <Reveal className={className} delay={delay}>
+      <Wrap className={className} delay={delay}>
         <div className="panel__head">
           <h3>Moon</h3>
           <span className="label">{Math.round(day.moon.illumination * 100)}% lit</span>
@@ -138,6 +150,10 @@ export function MoonCard({ day, className = "panel", delay = 0 }: { day: SkyDay;
           </div>
           <p className="small muted" style={{ margin: "6px 0 0" }}>Strongest near new and full moon.</p>
         </div>
-      </Reveal>
+      </Wrap>
   );
+}
+
+function PlainDiv({ className, children }: { className?: string; delay?: number; children: React.ReactNode }) {
+  return <div className={className}>{children}</div>;
 }

@@ -244,7 +244,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
         </section>
 
         <section className="home-pair">
-          <MoonCard day={today} className="panel" />
+          <MoonCard day={today} className="panel" reveal={false} />
           <div className="panel">
             <div className="panel__head">
               <h3>The Mile</h3>
