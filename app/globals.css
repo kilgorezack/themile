@@ -2688,12 +2688,14 @@ a.hcard:hover {
   white-space: nowrap;
 }
 .hwind__compass {
-  width: 52px;
+  width: 60px;
   flex: none;
-  margin: -6px -4px -6px 0;
+  /* lift into the empty space beside the WIND label */
+  margin: -30px -6px -4px 0;
+  align-self: flex-start;
 }
 .hwind__compass .compass {
-  width: 52px;
+  width: 60px;
   display: block;
 }
 .home-pair {
