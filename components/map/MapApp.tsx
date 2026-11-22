@@ -10,8 +10,21 @@ import { TopBar } from "../TopBar";
 import { Footer } from "../Footer";
 import { TimeSeries } from "../TimeSeries";
 import { RequireAuth } from "../auth/RequireAuth";
+import { AppleMap, type AppleMarker, type AppleView } from "./AppleMap";
 
 const [LAT0, LAT1, LON0, LON1] = G.bounds;
+/** svg units per degree of latitude, for converting view spans to Apple Maps spans */
+const UNITS_PER_DEG = G.h / (LAT1 - LAT0);
+
+/** The Mile's path back to [lat, lon] pairs, for drawing on Apple Maps. */
+const MILE_LATLON: [number, number][] = (G.mile.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g) ?? []).map((pair) => {
+  const [x, y] = pair.split(",").map(Number);
+  return [LAT1 - (y / G.h) * (LAT1 - LAT0), LON0 + (x / G.w) * (LON1 - LON0)];
+});
+
+type MapStyle = "field" | "satellite";
+const STYLE_KEY = "themile.map.style";
+
 const project = (lat: number, lon: number) => ({
   x: ((lon - LON0) / (LON1 - LON0)) * G.w,
   y: ((LAT1 - lat) / (LAT1 - LAT0)) * G.h,
@@ -77,6 +90,28 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
   const [selected, setSelected] = useState<string | null>(initialSite && SITES.some((s) => s.id === initialSite) ? initialSite : null);
   const [metric, setMetric] = useState<Metric | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [style, setStyleState] = useState<MapStyle>("field");
+  const [satView, setSatView] = useState<AppleView>(() => {
+    const s0 = SITES.find((x) => x.id === initialSite);
+    return s0 ? { lat: s0.lat, lon: s0.lon, spanDeg: 0.16, n: 0 } : { lat: VIEWS.system.lat, lon: VIEWS.system.lon, spanDeg: VIEWS.system.span / UNITS_PER_DEG, n: 0 };
+  });
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(STYLE_KEY) === "satellite") setStyleState("satellite");
+    } catch {}
+  }, []);
+  const setStyle = (v: MapStyle) => {
+    setStyleState(v);
+    try {
+      localStorage.setItem(STYLE_KEY, v);
+    } catch {}
+  };
+  const jump = (key: ViewKey) => {
+    if (style === "satellite") {
+      const v = VIEWS[key];
+      setSatView((o) => ({ lat: v.lat, lon: v.lon, spanDeg: v.span / UNITS_PER_DEG, n: o.n + 1 }));
+    } else setCam(fitView(key));
+  };
 
   /* ── pan / zoom state: center in svg units + k = svg units per screen px ── */
   const box = useRef<HTMLDivElement>(null);
@@ -188,6 +223,7 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
     const s = SITES.find((x) => x.id === id)!;
     const p = project(s.lat, s.lon);
     setCam((c) => ({ cx: p.x, cy: p.y, k: Math.min(c?.k ?? 1, 260 / Math.min(size.w, size.h)) }));
+    setSatView((o) => ({ lat: s.lat, lon: s.lon, spanDeg: Math.min(o.spanDeg, 0.16), n: o.n + 1 }));
     moved.current = 0;
     select(id);
   };
@@ -208,6 +244,21 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
     return pct == null ? 0.35 : 0.25 + Math.min(1, pct / 100) * 0.75;
   };
 
+  const appleMarkers = useMemo<AppleMarker[]>(
+    () =>
+      SITES.filter((s) => (s.kind === "dam" ? layers.dams : layers.gauges)).map((s) => ({
+        id: s.id,
+        lat: s.lat,
+        lon: s.lon,
+        kind: s.kind,
+        title: s.short,
+        subtitle: headline(s, r) ?? (s.kind === "gauge" ? "seasonal" : ""),
+      })),
+    [r, layers.dams, layers.gauges],
+  );
+  const satellite = style === "satellite";
+  const shownLayers = satellite ? LAYERS.filter((l) => l.id === "dams" || l.id === "gauges" || l.id === "labels") : LAYERS;
+
   const toggle = (id: LayerId) => setLayers((l) => ({ ...l, [id]: !l[id] }));
   const updated = new Date(r.fetchedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: MILE.timezone });
 
@@ -217,6 +268,8 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
         <div className="mapx__stage">
           <div
             ref={box}
+            style={satellite ? { visibility: "hidden", pointerEvents: "none" } : undefined}
+            aria-hidden={satellite}
             className="mapx__canvas"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -331,18 +384,40 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
             </svg>
           </div>
 
+          {satellite && (
+            <AppleMap
+              markers={appleMarkers}
+              mile={MILE_LATLON}
+              selected={selected}
+              onSelect={(id) => {
+                moved.current = 0;
+                select(id);
+              }}
+              view={satView}
+              showLabels={layers.labels}
+            />
+          )}
+
+          <div className="mapx__style" role="radiogroup" aria-label="Map style">
+            {(["field", "satellite"] as MapStyle[]).map((v) => (
+              <button key={v} type="button" role="radio" aria-checked={style === v} className={style === v ? "on" : ""} onClick={() => setStyle(v)}>
+                {v === "field" ? "Field map" : "Satellite"}
+              </button>
+            ))}
+          </div>
+
           <button type="button" className="btn mapx__layersbtn" aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>
             Layers {layersOpen ? "▴" : "▾"}
           </button>
           <div className={`mapx__layers ${layersOpen ? "is-open" : ""}`} role="group" aria-label="Layers">
-            {LAYERS.map((l) => (
+            {shownLayers.map((l) => (
               <button key={l.id} type="button" className={`chip ${layers[l.id] ? "on" : ""}`} aria-pressed={layers[l.id]} onClick={() => toggle(l.id)}>
                 {l.label}
               </button>
             ))}
           </div>
 
-          <div className="mapx__zoom">
+          <div className="mapx__zoom" hidden={satellite}>
             <button type="button" aria-label="Zoom in" onClick={() => zoomAt(1 / 1.5)}>
               +
             </button>
@@ -353,7 +428,7 @@ function MapView({ region, initialSite }: { region: RegionData; initialSite: str
 
           <div className="mapx__views" role="group" aria-label="Jump to">
             {(Object.keys(VIEWS) as ViewKey[]).map((key) => (
-              <button key={key} type="button" className="btn" onClick={() => setCam(fitView(key))}>
+              <button key={key} type="button" className="btn" onClick={() => jump(key)}>
                 {VIEWS[key].label}
               </button>
             ))}

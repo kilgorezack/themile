@@ -290,14 +290,15 @@ h3 {
     text-align: center;
     padding: 8px 6px;
   }
-  .dash {
-    padding-top: 128px;
+  /* tall two-row header: push page content below it (selectors outrank the base rules later on) */
+  main.dash {
+    padding-top: 132px;
   }
-  .mapx {
-    padding-top: 100px;
+  main.mapx {
+    padding-top: 108px;
   }
-  .gate {
-    padding-top: 136px;
+  div.gate {
+    padding-top: 140px;
   }
 }
 
@@ -2194,5 +2195,89 @@ h3 {
 @media (max-width: 640px) {
   .acct__signin {
     padding: 0 10px;
+  }
+}
+
+/* ── Map style switch + Apple Maps ───────────────────────── */
+.mapx__style {
+  position: absolute;
+  top: 12px;
+  right: 68px;
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  z-index: 2;
+}
+.mapx__style button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 500 13px var(--font-body), sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mapx__style button.on {
+  background: var(--ink);
+  color: var(--paper);
+}
+.mapx__zoom[hidden] {
+  display: none; /* satellite uses Apple's own zoom controls */
+}
+.mapx__stage:has(.applemap) .mapx__style {
+  right: 12px;
+}
+.mapx__layers,
+.mapx__layersbtn,
+.mapx__zoom,
+.mapx__views {
+  z-index: 2;
+}
+.mapx__layers {
+  right: 280px;
+}
+.applemap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #1b2420;
+}
+.applemap__map {
+  position: absolute;
+  inset: 0;
+}
+.applemap__msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  color: #e7e2d4;
+  font-size: 14px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.applemap__msg strong {
+  font-family: var(--font-display), serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+@media (max-width: 860px) {
+  .mapx__style {
+    right: 12px;
+    top: 12px;
+  }
+  .mapx__zoom {
+    top: 60px;
+  }
+  .mapx__layers {
+    right: 12px;
   }
 }
