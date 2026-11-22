@@ -84,7 +84,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
       <TopBar variant="hero" solidAfter={300} active="home" stale={stale} observedAt={cur?.observedAt ?? null} now={now} />
 
       <header className="home-hero">
-        <HeroScene now={now} windMph={cur?.windMph ?? null} cloudy={cloudy} crop={{ y: 300, h: 600 }} />
+        <HeroScene now={now} windMph={cur?.windMph ?? null} cloudy={cloudy} crop={{ y: 210, h: 680 }} />
         <div className="hero__shade" />
         <div className="wrap home-hero__content">
           <div className="label home-hero__kicker">
