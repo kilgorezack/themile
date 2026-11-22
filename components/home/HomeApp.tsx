@@ -87,17 +87,17 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
         <HeroScene now={now} windMph={cur?.windMph ?? null} cloudy={cloudy} crop={{ y: 210, h: 680 }} />
         <div className="hero__shade" />
         <div className="wrap home-hero__content">
-          <div className="label home-hero__kicker">
-            {new Date(now).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: MILE.timezone })} ·{" "}
-            {clock(now)} · Miracle Mile, North Platte
-          </div>
-          <div className="home-hero__title">
-            <h1>{verdict.headline}</h1>
+          <div className="home-hero__kicker">
             <span className={`home-pill tone-${verdict.tone}`}>
               <i aria-hidden />
               {verdict.tone}
             </span>
+            <span className="label">
+              {new Date(now).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: MILE.timezone })} ·{" "}
+              {clock(now)} · Miracle Mile<span className="home-hero__place">, North Platte</span>
+            </span>
           </div>
+          <h1>{verdict.headline}</h1>
           <p className="home-hero__lede">
             {verdict.notes[0]}
             {winLabel && (

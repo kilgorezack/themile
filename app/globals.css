@@ -2318,6 +2318,12 @@ h3 {
   gap: 10px;
 }
 .home-hero__kicker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.home-hero__kicker .label {
   color: rgba(246, 241, 230, 0.85);
 }
 .home-hero__title {
@@ -2338,7 +2344,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.25);
   color: #f6f1e6;
@@ -2752,5 +2758,11 @@ a.hcard:focus-visible {
   }
   100% {
     box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero__place {
+    display: none;
   }
 }
