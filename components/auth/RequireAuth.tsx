@@ -37,9 +37,6 @@ export function RequireAuth({ feature, blurb, children }: { feature: string; blu
               Back to home
             </a>
           </div>
-          <p className="small muted" style={{ margin: 0 }}>
-            Free. Google or email.
-          </p>
         </div>
       </div>
     );
