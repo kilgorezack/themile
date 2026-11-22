@@ -62,6 +62,20 @@ function loadMapKit(): Promise<any> {
 type Status = "checking" | "unconfigured" | "loading" | "ready" | "error";
 
 /**
+ * On unmount React runs effect cleanups in declaration order, so the map can be
+ * destroyed before the overlay/marker cleanups run. Only touch a map that's still
+ * the live one, and never let a cleanup throw (that blanks the whole page).
+ */
+function safely(map: { current: any }, m: any, fn: () => void) {
+  if (map.current !== m) return;
+  try {
+    fn();
+  } catch {
+    /* map already torn down */
+  }
+}
+
+/**
  * Apple Maps satellite view with our sites and the Mile drawn on top.
  * Selection is shared with the field map through `selected` / `onSelect`.
  */
@@ -133,9 +147,14 @@ export function AppleMap({
       .catch(() => alive && setStatus("error"));
     return () => {
       alive = false;
-      map.current?.destroy();
-      map.current = null;
+      const m = map.current;
+      map.current = null; // mark dead first so later cleanups skip it
       anns.current.clear();
+      try {
+        m?.destroy();
+      } catch {
+        /* ignore */
+      }
     };
   }, [allowed]);
 
@@ -148,7 +167,7 @@ export function AppleMap({
       { style: new mk.Style({ strokeColor: "#8fe0b0", strokeOpacity: 0.95, lineWidth: 5, lineCap: "round", lineJoin: "round" }) },
     );
     m.addOverlay(line);
-    return () => m.removeOverlay(line);
+    return () => safely(map, m, () => m.removeOverlay(line));
   }, [status, mile]);
 
   // 4. Markers (rebuilt when values or label setting change; there are only a handful).
@@ -172,7 +191,7 @@ export function AppleMap({
     m.addAnnotations(list);
     anns.current = new Map(list.map((a: any) => [a.data.id, a]));
     return () => {
-      m.removeAnnotations(list);
+      safely(map, m, () => m.removeAnnotations(list));
       anns.current.clear();
     };
   }, [status, markers, showLabels]);
