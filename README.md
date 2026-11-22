@@ -43,3 +43,9 @@ npm run dev
 - Flow bands ("Prime wading" etc.): `FLOW_BANDS` in `lib/config.ts`
 - Verdict rules: `lib/verdict.ts`
 - Location, gauge IDs, reservoir capacities: `lib/config.ts`
+
+## Screenshots
+
+![Hero](docs/screenshots/desk-light-hero.png)
+
+Full page: [light](docs/screenshots/desk-light-full.png) · [dark](docs/screenshots/desk-dark-full.png) · [phone](docs/screenshots/phone-hero.png)
