@@ -18,6 +18,21 @@ Built with Next.js (App Router) and deployed on Vercel.
 
 The page renders on the server (re-generated every 2 minutes) and the browser polls `/api/conditions` every minute and `/api/water` every 30 minutes.
 
+## Pages
+
+| Path | What |
+| --- | --- |
+| `/` | Conditions: the main scrolling page |
+| `/dashboard` | Customizable tile dashboard (show/hide, reorder, resize). Layout lives in `lib/dashboard/layout.ts`; today it's saved per browser via `browserLayoutStore`, and a Firestore-backed `LayoutStore` can drop in once Firebase Auth gates the page. |
+| `/map` | Pan/zoom map from Seminoe to Alcova with layer toggles. Dams (USBR Hydromet: release, inflow, storage, elevation) and USGS gauges; tap a site for history. `?site=<id>` deep-links (ids in `lib/sites.ts`). |
+| `/lite` | Low-data page (below) |
+
+Map geometry (`lib/regionGeo.ts`, `lib/mileGeo.ts`) is generated from USGS NHD waterbodies and NLDI flowlines.
+
+## Analytics
+
+Microsoft Clarity and Firebase (Analytics) load on the full site via `app/layout.tsx`. Firebase config is in `lib/firebase.ts`; those values are public identifiers, so access control belongs in Firebase Auth + Security Rules. `/lite` loads neither.
+
 ## Low-data page
 
 `/lite` (linked from the footer, `noindex`) is a backup for one-bar cell service: plain server-rendered HTML with no JavaScript, fonts or images (~1.5 KB gzipped). It shows current wind/air/pressure/flow, a lightning warning, the next 12 hours, three days, and light/solunar times. `/lite?auto` adds a 5-minute auto-refresh.

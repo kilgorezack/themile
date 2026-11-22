@@ -13,7 +13,7 @@ function localYMD(d: Date) {
  * parameter code. Sentinel values ("MISSING", "NO RECORD", negative
  * placeholder numbers) are dropped.
  */
-async function usbrDaily(codes: string[], days: number): Promise<Record<string, DailyValue[]>> {
+export async function usbrDaily(codes: string[], days: number): Promise<Record<string, DailyValue[]>> {
   const end = localYMD(new Date());
   const start = localYMD(new Date(Date.now() - days * 86_400_000));
   const url =
@@ -43,7 +43,25 @@ async function usbrDaily(codes: string[], days: number): Promise<Record<string, 
       if (code && Number.isFinite(v) && v >= 0) out[code].push({ date, value: v });
     });
   }
+  for (const code of codes) out[code] = sanitize(code, out[code]);
   return out;
+}
+
+/**
+ * Hydromet's newest rows are sometimes garbage (e.g. storage dropping 18% in a
+ * day). Drop storage/elevation points that jump implausibly from the recent median.
+ */
+function sanitize(code: string, series: DailyValue[]) {
+  const kind = code.split(" ")[1];
+  if (kind !== "AF" && kind !== "FB") return series;
+  const kept: DailyValue[] = [];
+  for (const p of series) {
+    const recent = kept.slice(-5).map((k) => k.value).sort((a, b) => a - b);
+    const med = recent[Math.floor(recent.length / 2)];
+    const bad = med != null && (kind === "AF" ? Math.abs(p.value - med) / med > 0.05 : Math.abs(p.value - med) > 2);
+    if (!bad) kept.push(p);
+  }
+  return kept;
 }
 
 async function usgsInflow(): Promise<{ t: number; cfs: number }[]> {
