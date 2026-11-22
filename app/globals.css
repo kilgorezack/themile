@@ -1742,6 +1742,7 @@ h3 {
 }
 .mapx__layers .chip.on {
   background: var(--ink);
+  border-color: color-mix(in srgb, var(--paper) 45%, transparent);
 }
 .mapx__zoom {
   position: absolute;
@@ -2280,4 +2281,9 @@ h3 {
   .mapx__layers {
     right: 12px;
   }
+}
+
+/* Apple requires its logo + Legal link (bottom-left) to stay visible */
+.mapx__stage:has(.applemap) .mapx__views {
+  bottom: 40px;
 }

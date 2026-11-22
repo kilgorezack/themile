@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const b64url = (b: Buffer | string) => Buffer.from(b).toString("base64url");
 
-export async function GET() {
+export async function GET(req: Request) {
   const headers = { "Content-Type": "text/plain", "Cache-Control": "no-store" };
 
   if (process.env.APPLE_MAPKIT_TOKEN) return new Response(process.env.APPLE_MAPKIT_TOKEN, { headers });
@@ -23,7 +23,12 @@ export async function GET() {
   try {
     const now = Math.floor(Date.now() / 1000);
     const header = b64url(JSON.stringify({ alg: "ES256", kid, typ: "JWT" }));
-    const payload = b64url(JSON.stringify({ iss: team, iat: now, exp: now + 30 * 60 }));
+    // Lock the token to the site that asked for it, so it can't be reused elsewhere.
+    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+    const claims: Record<string, unknown> = { iss: team, iat: now, exp: now + 30 * 60 };
+    if (host) claims.origin = `${proto}://${host}`;
+    const payload = b64url(JSON.stringify(claims));
     const sig = sign("sha256", Buffer.from(`${header}.${payload}`), {
       key: createPrivateKey(pem),
       dsaEncoding: "ieee-p1363", // JWT wants raw r||s, not DER

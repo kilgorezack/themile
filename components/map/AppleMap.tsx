@@ -103,9 +103,11 @@ export function AppleMap({
     };
   }, []);
 
-  // 2. Create the map.
+  // 2. Create the map. Keyed on "allowed", which stays true from loading → ready,
+  // so finishing the load doesn't tear down the map it just made.
+  const allowed = status === "loading" || status === "ready";
   useEffect(() => {
-    if (status !== "loading" || !el.current) return;
+    if (!allowed || !el.current) return;
     let alive = true;
     loadMapKit()
       .then((mk) => {
@@ -116,7 +118,7 @@ export function AppleMap({
           colorScheme: dark ? mk.Map.ColorSchemes.Dark : mk.Map.ColorSchemes.Light,
           showsCompass: mk.FeatureVisibility.Adaptive,
           showsScale: mk.FeatureVisibility.Adaptive,
-          showsMapTypeControl: true,
+          showsMapTypeControl: false, // our Field map / Satellite switch replaces it
           isRotationEnabled: false,
           showsPointsOfInterest: false,
         });
@@ -135,7 +137,7 @@ export function AppleMap({
       map.current = null;
       anns.current.clear();
     };
-  }, [status === "loading"]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allowed]);
 
   // 3. The Mile as a polyline.
   useEffect(() => {
