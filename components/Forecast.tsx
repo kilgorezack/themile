@@ -54,10 +54,10 @@ export function Forecast({ c, now }: { c: Conditions; now: number }) {
         </p>
       </Reveal>
 
-      <NextHours hourly={c.hourly} now={now} />
+      <NextHours id="hours" hourly={c.hourly} now={now} />
 
       {days.length > 0 && (
-        <Reveal className="panel" delay={100}>
+        <Reveal id="week" className="panel" delay={100}>
           <div className="panel__head" style={{ marginBottom: 0 }}>
             <h3>The week</h3>
             <span className="label">{c.forecastSource === "tempest" ? "Tempest station forecast" : "NWS forecast"}</span>
@@ -100,16 +100,18 @@ export function NextHours({
   now,
   className = "panel",
   delay = 0,
+  id,
 }: {
   hourly: HourlyForecast[];
   now: number;
   className?: string;
   delay?: number;
+  id?: string;
 }) {
   const hours = hourly.filter((h) => h.t >= now - 3600_000).slice(0, 36);
   const maxWind = Math.max(30, ...hours.map((h) => h.gustMph ?? h.windMph ?? 0));
   return (
-        <Reveal className={className} delay={delay}>
+        <Reveal id={id} className={className} delay={delay}>
           <div className="panel__head">
             <h3>Next 36 hours</h3>
             <div className="small muted" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>

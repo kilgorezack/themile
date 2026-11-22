@@ -33,7 +33,7 @@ export function Sky({ now }: { now: number }) {
       </Reveal>
 
       <div className="grid grid--station">
-        <Reveal className="panel span-8">
+        <Reveal id="solunar" className="panel span-8">
           <div className="panel__head">
             <h3>Today</h3>
             <span className="pill">
@@ -98,7 +98,7 @@ export function Sky({ now }: { now: number }) {
           </p>
         </Reveal>
 
-        <MoonCard day={day} className="panel span-4" delay={80} />
+        <MoonCard id="moon" day={day} className="panel span-4" delay={80} />
       </div>
     </section>
   );
@@ -111,7 +111,9 @@ export function MoonCard({
   className = "panel",
   delay = 0,
   reveal = true,
+  id,
 }: {
+  id?: string;
   day: SkyDay;
   className?: string;
   delay?: number;
@@ -120,7 +122,7 @@ export function MoonCard({
 }) {
   const Wrap = reveal ? Reveal : PlainDiv;
   return (
-      <Wrap className={className} delay={delay}>
+      <Wrap id={id} className={className} delay={delay}>
         <div className="panel__head">
           <h3>Moon</h3>
           <span className="label">{Math.round(day.moon.illumination * 100)}% lit</span>
@@ -154,6 +156,10 @@ export function MoonCard({
   );
 }
 
-function PlainDiv({ className, children }: { className?: string; delay?: number; children: React.ReactNode }) {
-  return <div className={className}>{children}</div>;
+function PlainDiv({ className, children, id }: { className?: string; delay?: number; id?: string; children: React.ReactNode }) {
+  return (
+    <div id={id} className={className}>
+      {children}
+    </div>
+  );
 }

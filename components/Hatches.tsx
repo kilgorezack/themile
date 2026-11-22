@@ -31,7 +31,7 @@ export function Hatches({ now }: { now: number }) {
         </p>
       </Reveal>
 
-      <Reveal className="panel">
+      <Reveal id="hatch-chart" className="panel">
         <div className="hatch-wrap">
           <table className="hatch">
             <caption className="sr-only">Hatch and spawning-run calendar for the Miracle Mile</caption>

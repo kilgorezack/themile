@@ -55,7 +55,7 @@ export function Water({ w }: { w: WaterData }) {
       </Reveal>
 
       <div className="grid grid--station">
-        <Reveal className="panel span-4">
+        <Reveal id="flow" className="panel span-4">
           <div className="panel__head">
             <h3>Flow</h3>
             <span className="label">{latest ? fmtDay(dateToMs(latest.date)) : "—"}</span>
@@ -95,7 +95,7 @@ export function Water({ w }: { w: WaterData }) {
           )}
         </Reveal>
 
-        <Reveal className="panel span-8" delay={80}>
+        <Reveal id="release" className="panel span-8" delay={80}>
           <div className="panel__head">
             <h3>Kortes Dam release</h3>
             <div role="tablist" aria-label="Range" style={{ display: "flex", gap: 4 }}>
@@ -139,7 +139,7 @@ export function Water({ w }: { w: WaterData }) {
           </p>
         </Reveal>
 
-        <Reveal className="panel span-5">
+        <Reveal id="reservoirs" className="panel span-5">
           <div className="panel__head">
             <h3>Reservoirs</h3>
             <span className="label">storage</span>
@@ -148,7 +148,7 @@ export function Water({ w }: { w: WaterData }) {
           <Tank name="Pathfinder" sub="below the Mile — where the fish run from" r={w.pathfinder} />
         </Reveal>
 
-        <Reveal className="panel span-7" delay={80}>
+        <Reveal id="inflow" className="panel span-7" delay={80}>
           <div className="panel__head">
             <h3>Upstream inflow</h3>
             <span className="label">USGS 06630000 · 7 days</span>

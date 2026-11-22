@@ -115,7 +115,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
 
       <main className="wrap home">
         <section aria-label="Right now" className="home-metrics">
-          <a href="/conditions#water" className="hcard">
+          <a href="/conditions#flow" className="hcard">
             <span className="label">Flow</span>
             <span className="num hbig">
               <CountUp value={flow?.value ?? null} />
@@ -127,7 +127,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
             </span>
             <Sparkline label="Kortes release, 30 days" height={28} area={false} points={w.release.slice(-30).map((d) => ({ t: ymdToMs(d.date), v: d.value }))} />
           </a>
-          <a href="/conditions#station" className="hcard">
+          <a href="/conditions#wind" className="hcard">
             <span className="label">Wind</span>
             <span className="hwind">
               <span className="num hbig">
@@ -145,7 +145,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
             </span>
             <Sparkline label="Wind, last 24 hours" height={28} area={false} points={c.history.map((h) => ({ t: h.t, v: h.windMph }))} />
           </a>
-          <a href="/conditions#station" className="hcard">
+          <a href="/conditions#air" className="hcard">
             <span className="label">Air</span>
             <span className="num hbig">
               <CountUp value={cur?.tempF ?? null} />°
@@ -155,7 +155,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
             </span>
             <Sparkline label="Air temperature, last 24 hours" height={28} area={false} color="var(--ochre)" points={c.history.map((h) => ({ t: h.t, v: h.tempF }))} />
           </a>
-          <a href="/conditions#station" className="hcard">
+          <a href="/conditions#pressure" className="hcard">
             <span className="label">Barometer</span>
             <span className="num hbig">
               <CountUp value={cur?.pressureInHg ?? null} digits={2} />
@@ -165,14 +165,14 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
             </span>
             <Sparkline label="Pressure, last 24 hours" height={28} area={false} color="var(--slate)" points={c.history.map((h) => ({ t: h.t, v: h.pressureInHg }))} />
           </a>
-          <a href="/conditions#sky" className="hcard">
+          <a href="/conditions#solunar" className="hcard">
             <span className="label">{active ? "Feeding now" : "Next window"}</span>
             <span className="num hbig">{active ? "Now" : next ? <BigTime t={next.start} /> : "—"}</span>
             <span className="hsub">
               {active ? `${active.kind} solunar until ${fmtTime(active.end)}` : next ? `${next.kind[0].toUpperCase()}${next.kind.slice(1)} solunar · ${next.why.toLowerCase()}` : ""}
             </span>
           </a>
-          <a href="/conditions#sky" className="hcard">
+          <a href="/conditions#solunar" className="hcard">
             <span className="label">Last light</span>
             <span className="num hbig">
               <BigTime t={today.sun.dusk} />
@@ -185,15 +185,19 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
           </a>
         </section>
 
-        <Timeline day={plan.day} win={plan.win} tomorrow={plan.tomorrow} now={now} />
+        <a href="/conditions#solunar" className="home-link" aria-label="Today on the Mile: open sun and feeding times on Conditions">
+          <Timeline day={plan.day} win={plan.win} tomorrow={plan.tomorrow} now={now} />
+        </a>
 
-        <NextHours hourly={c.hourly} now={now} className="panel home-hours" />
+        <a href="/conditions#hours" className="home-link" aria-label="Next 36 hours: open the forecast on Conditions">
+          <NextHours hourly={c.hourly} now={now} className="panel home-hours" />
+        </a>
 
         <section className="home-summary">
-          <a href="/map" className="hcard hcard--pad">
+          <a href="/conditions#reservoirs" className="hcard hcard--pad">
             <div className="hcard__head">
               <span className="label">Water</span>
-              <span className="hcard__more">Map →</span>
+              <span className="hcard__more">Details →</span>
             </div>
             <dl className="hdl">
               <dt>Kortes release</dt>
@@ -210,7 +214,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
               <dd className="mono">{w.inflow.at(-1) ? `${Math.round(w.inflow.at(-1)!.cfs)} cfs` : "—"}</dd>
             </dl>
           </a>
-          <a href="/conditions#forecast" className="hcard hcard--pad">
+          <a href="/conditions#week" className="hcard hcard--pad">
             <div className="hcard__head">
               <span className="label">Next 3 days</span>
               <span className="hcard__more">Forecast →</span>
@@ -228,7 +232,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
             </dl>
             <span className="small muted">High / low · max wind mph</span>
           </a>
-          <a href="/conditions#hatches" className="hcard hcard--pad">
+          <a href="/conditions#hatch-chart" className="hcard hcard--pad">
             <div className="hcard__head">
               <span className="label">Tie on in {MONTHS[month]}</span>
               <span className="hcard__more">Hatches →</span>
@@ -244,14 +248,18 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
         </section>
 
         <section className="home-pair">
-          <MoonCard day={today} className="panel" reveal={false} />
-          <div className="panel">
+          <a href="/conditions#moon" className="home-link">
+            <MoonCard day={today} className="panel" reveal={false} />
+          </a>
+          <a href="/conditions#mile-map" className="home-link">
+            <div className="panel">
             <div className="panel__head">
               <h3>The Mile</h3>
               <span className="label">≈ {MILE_GEO.mileMiles} river mi at full pool</span>
             </div>
             <RiverMap flow={flow?.value ?? null} />
-          </div>
+            </div>
+          </a>
         </section>
 
         <section aria-label="Go deeper" className="home-deeper">

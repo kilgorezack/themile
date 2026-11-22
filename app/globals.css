@@ -2708,3 +2708,49 @@ a.hcard:hover {
 .home .panel {
   border-radius: 8px;
 }
+
+/* Home: whole widgets are links into Conditions */
+.home-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+.home-link > .panel,
+.home-link > .hcard {
+  height: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, transform 0.2s var(--ease-out);
+}
+.home-link:hover > .panel,
+.home-link:hover > .hcard {
+  border-color: var(--ink-3);
+  transform: translateY(-1px);
+}
+.home-link:focus-visible,
+a.hcard:focus-visible {
+  outline: 2px solid var(--river);
+  outline-offset: 3px;
+}
+
+/* Conditions: land below the fixed header, then flash the widget you came for */
+.section [id] {
+  scroll-margin-top: 80px;
+}
+@media (max-width: 640px) {
+  .section [id] {
+    scroll-margin-top: 124px;
+  }
+}
+.is-targeted {
+  animation: targetFlash 2s var(--ease-out);
+}
+@keyframes targetFlash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 3px var(--river);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}

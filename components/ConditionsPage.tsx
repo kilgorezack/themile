@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useScrollToHash } from "./useScrollToHash";
 import type { Conditions, WaterData } from "@/lib/types";
 import { activePeriod, skyDay } from "@/lib/astro";
 import { readTheDay } from "@/lib/verdict";
@@ -26,6 +27,7 @@ import { MILE } from "@/lib/config";
 export function ConditionsPage({ conditions, water, serverNow }: { conditions: Conditions; water: WaterData; serverNow: number }) {
   const { user } = useAuth();
   const signedIn = Boolean(user);
+  useScrollToHash(signedIn);
   const now = useNow(serverNow, 30_000);
   const { data: c, stale } = useLive("/api/conditions", conditions, 60_000);
   const { data: w } = useLive("/api/water", water, 30 * 60_000);
@@ -79,7 +81,7 @@ export function ConditionsPage({ conditions, water, serverNow }: { conditions: C
       <main>
         <section className="section wrap" id="today" style={{ paddingTop: "clamp(48px, 6vw, 80px)" }}>
           <div className="grid grid--station">
-            <Reveal className={`panel span-7 tone-${verdict.tone}`}>
+            <Reveal id="read" className={`panel span-7 tone-${verdict.tone}`}>
               <div className="panel__head">
                 <h3>Today&rsquo;s read</h3>
                 <span className="pill">{verdict.tone}</span>
@@ -91,7 +93,7 @@ export function ConditionsPage({ conditions, water, serverNow }: { conditions: C
               </ol>
               <TieOn now={now} />
             </Reveal>
-            <Reveal className="panel span-5" delay={80}>
+            <Reveal id="mile-map" className="panel span-5" delay={80}>
               <div className="panel__head">
                 <h3>The Mile</h3>
                 <span className="label">≈ {MILE_GEO.mileMiles} river mi at full pool</span>

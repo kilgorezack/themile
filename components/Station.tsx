@@ -66,7 +66,7 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
 
       <div className="grid grid--station">
         {/* Wind */}
-        <Reveal className="panel span-7" delay={0}>
+        <Reveal id="wind" className="panel span-7" delay={0}>
           <WindLines dir={cur?.windDir ?? null} speed={cur?.windMph ?? null} />
           <div className="panel__head" style={{ position: "relative" }}>
             <h3>Wind</h3>
@@ -108,7 +108,7 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
         </Reveal>
 
         {/* Air temp */}
-        <Reveal className="panel span-5" delay={80}>
+        <Reveal id="air" className="panel span-5" delay={80}>
           <div className="panel__head">
             <h3>Air</h3>
             <span className="label">{cur?.conditions ?? "Temperature"}</span>
@@ -141,7 +141,7 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
         </Reveal>
 
         {/* Pressure */}
-        <Reveal className="panel span-5" delay={0}>
+        <Reveal id="pressure" className="panel span-5" delay={0}>
           <div className="panel__head">
             <h3>Barometer</h3>
             <span className="trend">
@@ -158,7 +158,7 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
 
         {/* Small tiles */}
         <div className="span-7 grid" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))" }}>
-          <Reveal className="panel tile" delay={60}>
+          <Reveal id="rain" className="panel tile" delay={60}>
             <span className="label">Rain today</span>
             <span className="num">
               {fmt(cur?.precipTodayIn, 2)}
@@ -166,12 +166,12 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
             </span>
             <p>{cur?.precipTodayIn == null ? "No rain gauge reporting." : cur.precipTodayIn > 0 ? "Watch for color off the side draws." : "Dry so far today."}</p>
           </Reveal>
-          <Reveal className="panel tile" delay={120}>
+          <Reveal id="uv" className="panel tile" delay={120}>
             <span className="label">UV index</span>
             <span className="num">{fmt(cur?.uv, 0)}</span>
             <p>{uvNote(cur?.uv ?? null)}</p>
           </Reveal>
-          <Reveal className="panel tile" delay={180}>
+          <Reveal id="sunlight" className="panel tile" delay={180}>
             <span className="label">Sunlight</span>
             <span className="num">
               {fmt(cur?.solarWm2)}
@@ -179,7 +179,7 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
             </span>
             <p>{cur?.solarWm2 == null ? "No light sensor reporting." : cur.solarWm2 > 500 ? "Bright — fish will hold deeper." : "Low light. Good cover for you."}</p>
           </Reveal>
-          <Reveal className="panel tile" delay={240}>
+          <Reveal id="lightning" className="panel tile" delay={240}>
             <span className="label">Lightning</span>
             {cur?.lightning ? (
               <>
