@@ -16,12 +16,16 @@ import { Hatches } from "./Hatches";
 import { Reveal } from "./Reveal";
 import { TopBar } from "./TopBar";
 import { Footer } from "./Footer";
+import { RequireAuth } from "./auth/RequireAuth";
+import { useAuth } from "./auth/AuthProvider";
 import { RiverMap } from "./RiverMap";
 import { MILE_GEO } from "@/lib/mileGeo";
 import { HATCHES } from "@/lib/hatches";
 import { MILE } from "@/lib/config";
 
-export function Dashboard({ conditions, water, serverNow }: { conditions: Conditions; water: WaterData; serverNow: number }) {
+export function ConditionsPage({ conditions, water, serverNow }: { conditions: Conditions; water: WaterData; serverNow: number }) {
+  const { user } = useAuth();
+  const signedIn = Boolean(user);
   const now = useNow(serverNow, 30_000);
   const { data: c, stale } = useLive("/api/conditions", conditions, 60_000);
   const { data: w } = useLive("/api/water", water, 30 * 60_000);
@@ -34,7 +38,8 @@ export function Dashboard({ conditions, water, serverNow }: { conditions: Condit
 
   return (
     <>
-      <TopBar variant="hero" active="home" stale={stale} observedAt={cur?.observedAt ?? null} now={now} />
+      <TopBar variant={signedIn ? "hero" : "solid"} active="conditions" stale={stale} observedAt={cur?.observedAt ?? null} now={now} />
+      <RequireAuth feature="Conditions" blurb="The full report: live station, wind and pressure history, Kortes releases, the forecast, sun and moon, and the hatch chart.">
 
       <header className="hero">
         <HeroScene now={now} windMph={cur?.windMph ?? null} cloudy={cloudy} />
@@ -102,6 +107,7 @@ export function Dashboard({ conditions, water, serverNow }: { conditions: Condit
         <Sky now={now} />
         <Hatches now={now} />
       </main>
+      </RequireAuth>
 
       <Footer source={cur?.source ?? null} fetchedAt={c.fetchedAt} />
     </>

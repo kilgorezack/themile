@@ -5,7 +5,8 @@ import { AccountButton } from "./auth/AccountButton";
 import { useAuth } from "./auth/AuthProvider";
 
 const TABS = [
-  { id: "home", href: "/", label: "Conditions", members: false },
+  { id: "home", href: "/", label: "Home", members: false },
+  { id: "conditions", href: "/conditions", label: "Conditions", members: true },
   { id: "dashboard", href: "/dashboard", label: "Dashboard", members: true },
   { id: "map", href: "/map", label: "Map", members: true },
 ] as const;
@@ -18,12 +19,15 @@ export type TabId = (typeof TABS)[number]["id"];
  */
 export function TopBar({
   variant = "solid",
+  solidAfter,
   active,
   stale = false,
   observedAt,
   now,
 }: {
   variant?: "hero" | "solid";
+  /** hero variant: px scrolled before the bar turns solid (default 60% of the viewport) */
+  solidAfter?: number;
   active: TabId;
   stale?: boolean;
   observedAt?: string | null;
@@ -33,12 +37,15 @@ export function TopBar({
   const { user, loading } = useAuth();
   const locked = !loading && !user;
   useEffect(() => {
-    if (variant === "solid") return;
-    const on = () => setSolid(window.scrollY > window.innerHeight * 0.6);
+    if (variant === "solid") {
+      setSolid(true);
+      return;
+    }
+    const on = () => setSolid(window.scrollY > (solidAfter ?? window.innerHeight * 0.6));
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
-  }, [variant]);
+  }, [variant, solidAfter]);
   const mins = observedAt ? Math.round((now - Date.parse(observedAt)) / 60_000) : null;
   const old = stale || mins == null || mins > 20;
   return (

@@ -83,7 +83,18 @@ function toSky(azimuthDeg: number, alt: number) {
   return { x, y, alt };
 }
 
-export function HeroScene({ now, windMph, cloudy }: { now: number; windMph: number | null; cloudy: boolean }) {
+export function HeroScene({
+  now,
+  windMph,
+  cloudy,
+  crop,
+}: {
+  now: number;
+  windMph: number | null;
+  cloudy: boolean;
+  /** show only this vertical band of the scene (svg units), centered — for short banners */
+  crop?: { y: number; h: number };
+}) {
   const root = useRef<HTMLDivElement>(null);
 
   const ridges = useMemo(
@@ -129,7 +140,7 @@ export function HeroScene({ now, windMph, cloudy }: { now: number; windMph: numb
 
   return (
     <div className="hero__scene" ref={root} aria-hidden>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice">
+      <svg viewBox={crop ? `0 ${crop.y} ${W} ${crop.h}` : `0 0 ${W} ${H}`} preserveAspectRatio={crop ? "xMidYMid slice" : "xMidYMax slice"}>
         <defs>
           <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor={sky.top} />

@@ -34,7 +34,7 @@ export function RequireAuth({ feature, blurb, children }: { feature: string; blu
               Sign in or create an account
             </button>
             <a className="btn" href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
-              Back to conditions
+              Back to home
             </a>
           </div>
           <p className="small muted" style={{ margin: 0 }}>

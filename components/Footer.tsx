@@ -47,7 +47,15 @@ export function Footer({ source, fetchedAt }: { source: string | null; fetchedAt
 
         <div className="footer__bottom mono">
           <span>Updated {updated} MT · preliminary data</span>
-          <a href="#top">Back to top ↑</a>
+          <span className="footer__end">
+            <span className="footer__made">
+              The Mile is made by{" "}
+              <a href="https://summitlabs.one" rel="noreferrer">
+                Summit Labs
+              </a>
+            </span>
+            <a href="#top">Back to top ↑</a>
+          </span>
         </div>
       </div>
     </footer>

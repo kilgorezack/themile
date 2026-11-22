@@ -22,7 +22,8 @@ The page renders on the server (re-generated every 2 minutes) and the browser po
 
 | Path | What |
 | --- | --- |
-| `/` | Conditions: the main scrolling page |
+| `/` | Home (public): verdict, six key metrics, "Today on the Mile" timeline with a computed best window (`lib/bestWindow.ts`), water / 3-day / hatch summaries |
+| `/conditions` | Members: the full scrolling conditions report |
 | `/dashboard` | Customizable tile dashboard (show/hide, reorder, resize). Layout lives in `lib/dashboard/layout.ts`; today it's saved per browser via `browserLayoutStore`, and a Firestore-backed `LayoutStore` can drop in once Firebase Auth gates the page. |
 | `/map` | Pan/zoom map from Seminoe to Alcova with layer toggles. Dams (USBR Hydromet: release, inflow, storage, elevation) and USGS gauges; tap a site for history. `?site=<id>` deep-links (ids in `lib/sites.ts`). Field map / Satellite switch; satellite uses Apple MapKit JS (setup: `docs/apple-maps.md`). |
 | `/lite` | Low-data page (below) |
@@ -31,7 +32,7 @@ Map geometry (`lib/regionGeo.ts`, `lib/mileGeo.ts`) is generated from USGS NHD w
 
 ## Accounts
 
-Firebase Auth (Google + email/password) via `components/auth/`. The **Sign in** button / account menu sits top right; `/dashboard` and `/map` show a sign-in prompt until you're signed in (`RequireAuth`). The gate is client-side, which is fine for the public data on those pages; anything private later should also be checked server-side or with Firestore Security Rules.
+Firebase Auth (Google + email/password) via `components/auth/`. The **Sign in** button / account menu sits top right; `/conditions`, `/dashboard` and `/map` show a sign-in prompt until you're signed in (`RequireAuth`). The gate is client-side, which is fine for the public data on those pages; anything private later should also be checked server-side or with Firestore Security Rules.
 
 Firebase console setup: Authentication → Settings → **Authorized domains** must include the production domain (and any Vercel preview domains you test sign-in on).
 
