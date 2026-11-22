@@ -18,6 +18,7 @@ import { useLive, useNow } from "../hooks";
 import { TopBar } from "../TopBar";
 import { Footer } from "../Footer";
 import { WIDGETS } from "./widgets";
+import { RequireAuth } from "../auth/RequireAuth";
 
 export function DashboardApp({
   conditions,
@@ -67,6 +68,7 @@ export function DashboardApp({
   return (
     <>
       <TopBar active="dashboard" stale={stale} observedAt={c.current?.observedAt ?? null} now={now} />
+      <RequireAuth feature="Dashboard" blurb="Every reading on one screen: station, flows, reservoirs, gauges and the outlook. Arrange the tiles your way.">
       <main className="wrap dash">
         <header className="dash__head">
           <div>
@@ -136,6 +138,7 @@ export function DashboardApp({
           })}
         </div>
       </main>
+      </RequireAuth>
       <Footer source={c.current?.source ?? null} fetchedAt={c.fetchedAt} />
     </>
   );

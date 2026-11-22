@@ -29,6 +29,12 @@ The page renders on the server (re-generated every 2 minutes) and the browser po
 
 Map geometry (`lib/regionGeo.ts`, `lib/mileGeo.ts`) is generated from USGS NHD waterbodies and NLDI flowlines.
 
+## Accounts
+
+Firebase Auth (Google + email/password) via `components/auth/`. The **Sign in** button / account menu sits top right; `/dashboard` and `/map` show a sign-in prompt until you're signed in (`RequireAuth`). The gate is client-side, which is fine for the public data on those pages; anything private later should also be checked server-side or with Firestore Security Rules.
+
+Firebase console setup: Authentication → Settings → **Authorized domains** must include the production domain (and any Vercel preview domains you test sign-in on).
+
 ## Analytics
 
 Microsoft Clarity and Firebase (Analytics) load on the full site via `app/layout.tsx`. Firebase config is in `lib/firebase.ts`; those values are public identifiers, so access control belongs in Firebase Auth + Security Rules. `/lite` loads neither.

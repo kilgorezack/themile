@@ -9,6 +9,7 @@ import { useLive, useNow } from "../hooks";
 import { TopBar } from "../TopBar";
 import { Footer } from "../Footer";
 import { TimeSeries } from "../TimeSeries";
+import { RequireAuth } from "../auth/RequireAuth";
 
 const [LAT0, LAT1, LON0, LON1] = G.bounds;
 const project = (lat: number, lon: number) => ({
@@ -52,6 +53,18 @@ function headline(site: SiteDef, r: RegionData) {
 
 export function MapApp({ region, serverNow, initialSite }: { region: RegionData; serverNow: number; initialSite: string | null }) {
   const now = useNow(serverNow, 60_000);
+  return (
+    <>
+      <TopBar active="map" now={now} />
+      <RequireAuth feature="Map" blurb="Seminoe to Alcova: every dam's release, inflow, storage and elevation, plus the river gauges, on one map you can explore.">
+        <MapView region={region} initialSite={initialSite} />
+      </RequireAuth>
+      <Footer source={null} fetchedAt={region.fetchedAt} />
+    </>
+  );
+}
+
+function MapView({ region, initialSite }: { region: RegionData; initialSite: string | null }) {
   const { data: r } = useLive("/api/region", region, 30 * 60_000);
   const [layers, setLayers] = useState<Record<LayerId, boolean>>({
     reservoirs: true,
@@ -200,7 +213,6 @@ export function MapApp({ region, serverNow, initialSite }: { region: RegionData;
 
   return (
     <>
-      <TopBar active="map" now={now} />
       <main className="mapx">
         <div className="mapx__stage">
           <div
@@ -452,7 +464,6 @@ export function MapApp({ region, serverNow, initialSite }: { region: RegionData;
           )}
         </aside>
       </main>
-      <Footer source={null} fetchedAt={r.fetchedAt} />
     </>
   );
 }

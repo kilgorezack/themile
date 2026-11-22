@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import Script from "next/script";
 import { FirebaseInit } from "@/components/FirebaseInit";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { SignInDialog } from "@/components/auth/SignInDialog";
 import "./globals.css";
 
 const display = Fraunces({
@@ -35,7 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+          <SignInDialog />
+        </AuthProvider>
         <FirebaseInit />
         {/* Microsoft Clarity analytics */}
         <Script id="ms-clarity" strategy="afterInteractive">
