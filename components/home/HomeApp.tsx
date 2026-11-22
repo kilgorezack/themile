@@ -273,7 +273,7 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
           <a href="/lite" className="hcard hcard--pad hcard--alt">
             <span className="label">One bar of signal?</span>
             <span className="hdeep">Low-data page →</span>
-            <span className="hsub">The essentials in about 2 KB.</span>
+            <span className="hsub">Just the essentials, built to load on weak signal.</span>
           </a>
         </section>
       </main>
