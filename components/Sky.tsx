@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { activePeriod, fmtTime, nextPeriod, skyDay } from "@/lib/astro";
+import { activePeriod, fmtTime, nextPeriod, skyDay, type SkyDay } from "@/lib/astro";
 import { MoonPhase } from "./Instruments";
 import { Reveal } from "./Reveal";
 
@@ -98,38 +98,46 @@ export function Sky({ now }: { now: number }) {
           </p>
         </Reveal>
 
-        <Reveal className="panel span-4" delay={80}>
-          <div className="panel__head">
-            <h3>Moon</h3>
-            <span className="label">{Math.round(day.moon.illumination * 100)}% lit</span>
-          </div>
-          <div style={{ display: "grid", placeItems: "center", padding: "6px 0 12px" }}>
-            <MoonPhase phase={day.moon.phase} size={132} />
-          </div>
-          <p style={{ textAlign: "center", margin: 0, fontFamily: "var(--font-display)", fontSize: 24, fontStyle: "italic" }}>
-            {day.moon.phaseName}
-          </p>
-          <div className="kv" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))" }}>
-            <div>
-              <div className="label">Moonrise</div>
-              <div className="v">{fmtTime(day.moon.rise)}</div>
-            </div>
-            <div>
-              <div className="label">Moonset</div>
-              <div className="v">{fmtTime(day.moon.set)}</div>
-            </div>
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <div className="label">Solunar day</div>
-            <div style={{ display: "flex", gap: 4, marginTop: 6 }} aria-label={`${day.rating} of 4`}>
-              {[1, 2, 3, 4].map((i) => (
-                <span key={i} style={{ flex: 1, height: 6, borderRadius: 2, background: i <= day.rating ? "var(--river)" : "var(--rule)" }} />
-              ))}
-            </div>
-            <p className="small muted" style={{ margin: "6px 0 0" }}>Strongest near new and full moon.</p>
-          </div>
-        </Reveal>
+        <MoonCard day={day} className="panel span-4" delay={80} />
       </div>
     </section>
+  );
+}
+
+
+/** Moon phase, rise/set and the solunar day rating. */
+export function MoonCard({ day, className = "panel", delay = 0 }: { day: SkyDay; className?: string; delay?: number }) {
+  return (
+      <Reveal className={className} delay={delay}>
+        <div className="panel__head">
+          <h3>Moon</h3>
+          <span className="label">{Math.round(day.moon.illumination * 100)}% lit</span>
+        </div>
+        <div style={{ display: "grid", placeItems: "center", padding: "6px 0 12px" }}>
+          <MoonPhase phase={day.moon.phase} size={132} />
+        </div>
+        <p style={{ textAlign: "center", margin: 0, fontFamily: "var(--font-display)", fontSize: 24, fontStyle: "italic" }}>
+          {day.moon.phaseName}
+        </p>
+        <div className="kv" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))" }}>
+          <div>
+            <div className="label">Moonrise</div>
+            <div className="v">{fmtTime(day.moon.rise)}</div>
+          </div>
+          <div>
+            <div className="label">Moonset</div>
+            <div className="v">{fmtTime(day.moon.set)}</div>
+          </div>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <div className="label">Solunar day</div>
+          <div style={{ display: "flex", gap: 4, marginTop: 6 }} aria-label={`${day.rating} of 4`}>
+            {[1, 2, 3, 4].map((i) => (
+              <span key={i} style={{ flex: 1, height: 6, borderRadius: 2, background: i <= day.rating ? "var(--river)" : "var(--rule)" }} />
+            ))}
+          </div>
+          <p className="small muted" style={{ margin: "6px 0 0" }}>Strongest near new and full moon.</p>
+        </div>
+      </Reveal>
   );
 }

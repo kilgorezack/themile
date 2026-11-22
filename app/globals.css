@@ -2602,7 +2602,7 @@ a.hcard:hover {
 .tl__win {
   position: absolute;
   top: -6px;
-  height: calc(22px + 44px + 22px + 20px + 12px);
+  height: calc(22px + 22px + 10px + 12px);
   border: 2px solid var(--river);
   border-radius: 6px;
   box-sizing: border-box;
@@ -2612,7 +2612,7 @@ a.hcard:hover {
 .tl__now {
   position: absolute;
   top: -10px;
-  height: calc(22px + 44px + 22px + 20px + 20px);
+  height: calc(22px + 22px + 10px + 20px);
   width: 2px;
   margin-left: -1px;
   background: var(--rust);
@@ -2666,4 +2666,45 @@ a.hcard:hover {
     font-size: 12px;
     padding: 8px 4px;
   }
+}
+
+/* Home: wind card compass, 36h ribbon, moon + map row */
+.hwind {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hwind {
+  min-height: 44px;
+}
+.hwind .hbig {
+  white-space: nowrap;
+}
+.hwind__compass {
+  width: 52px;
+  flex: none;
+  margin: -6px -4px -6px 0;
+}
+.hwind__compass .compass {
+  width: 52px;
+  display: block;
+}
+.home-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+/* keep the tall river map to the moon card's scale */
+.home-pair .map svg {
+  max-height: 440px;
+  width: 100%;
+}
+@media (max-width: 820px) {
+  .home-pair {
+    grid-template-columns: 1fr;
+  }
+}
+.home .panel {
+  border-radius: 8px;
 }

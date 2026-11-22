@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Conditions, HistoryPoint, HourlyForecast, WaterData } from "@/lib/types";
+import type { Conditions, WaterData } from "@/lib/types";
 import { activePeriod, fmtTime, nextPeriod, skyDay, type SkyDay } from "@/lib/astro";
 import { bestWindow, type BestWindow } from "@/lib/bestWindow";
 import { readTheDay } from "@/lib/verdict";
@@ -14,6 +14,11 @@ import { Footer } from "../Footer";
 import { HeroScene } from "../HeroScene";
 import { CountUp } from "../CountUp";
 import { Sparkline } from "../dash/Sparkline";
+import { Compass } from "../Instruments";
+import { NextHours } from "../Forecast";
+import { MoonCard } from "../Sky";
+import { RiverMap } from "../RiverMap";
+import { MILE_GEO } from "@/lib/mileGeo";
 
 const H = 3600_000;
 const ymdToMs = (ymd: string) => Date.parse(`${ymd}T12:00:00-07:00`);
@@ -124,12 +129,18 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
           </a>
           <a href="/conditions#station" className="hcard">
             <span className="label">Wind</span>
-            <span className="num hbig">
-              <CountUp value={cur?.windMph ?? null} />
-              <small className="mono"> mph {cardinal(cur?.windDir)}</small>
+            <span className="hwind">
+              <span className="num hbig">
+                <CountUp value={cur?.windMph ?? null} />
+                <small className="mono"> mph</small>
+              </span>
+              <span className="hwind__compass">
+                <Compass dir={cur?.windDir ?? null} speed={cur?.windMph ?? null} gust={cur?.gustMph ?? null} />
+              </span>
             </span>
             <span className="hsub">
-              {cur?.gustMph != null ? `Gusts ${fmt(cur.gustMph)}` : "No gust data"}
+              From {cardinal(cur?.windDir)}
+              {cur?.gustMph != null ? ` · gusts ${fmt(cur.gustMph)}` : ""}
               {windTrend ? ` · ${windTrend}` : ""}
             </span>
             <Sparkline label="Wind, last 24 hours" height={28} area={false} points={c.history.map((h) => ({ t: h.t, v: h.windMph }))} />
@@ -174,7 +185,9 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
           </a>
         </section>
 
-        <Timeline day={plan.day} win={plan.win} tomorrow={plan.tomorrow} hourly={c.hourly} history={c.history} now={now} />
+        <Timeline day={plan.day} win={plan.win} tomorrow={plan.tomorrow} now={now} />
+
+        <NextHours hourly={c.hourly} now={now} className="panel home-hours" />
 
         <section className="home-summary">
           <a href="/map" className="hcard hcard--pad">
@@ -230,6 +243,17 @@ export function HomeApp({ conditions, water, serverNow }: { conditions: Conditio
           </a>
         </section>
 
+        <section className="home-pair">
+          <MoonCard day={today} className="panel" />
+          <div className="panel">
+            <div className="panel__head">
+              <h3>The Mile</h3>
+              <span className="label">≈ {MILE_GEO.mileMiles} river mi at full pool</span>
+            </div>
+            <RiverMap flow={flow?.value ?? null} />
+          </div>
+        </section>
+
         <section aria-label="Go deeper" className="home-deeper">
           <a href="/conditions" className="hcard hcard--pad">
             <span className="label">Full report</span>
@@ -270,20 +294,16 @@ function Bar({ pct }: { pct: number | null }) {
   );
 }
 
-/** Daylight, hourly wind and solunar windows on one 6 AM – 10 PM scale. */
+/** Daylight and solunar windows on one 6 AM – 10 PM scale, with the best window boxed. */
 function Timeline({
   day,
   win,
   tomorrow,
-  hourly,
-  history,
   now,
 }: {
   day: SkyDay;
   win: BestWindow | null;
   tomorrow: boolean;
-  hourly: HourlyForecast[];
-  history: HistoryPoint[];
   now: number;
 }) {
   const t0 = day.midnight + 6 * H;
@@ -291,26 +311,6 @@ function Timeline({
   const pos = (t: number) => Math.min(100, Math.max(0, ((t - t0) / SPAN) * 100));
   const wid = (a: number, b: number) => Math.max(0, pos(b) - pos(a));
 
-  const bars = Array.from({ length: 16 }, (_, i) => {
-    const s = t0 + i * H;
-    const f = hourly.find((h) => Math.abs(h.t - s) < H / 2);
-    let v = f ? (f.windMph ?? null) : null;
-    let g = f ? (f.gustMph ?? null) : null;
-    if (v == null) {
-      const pts = history.filter((p) => p.t >= s && p.t < s + H && p.windMph != null);
-      if (pts.length) {
-        v = pts.reduce((a, p) => a + p.windMph!, 0) / pts.length;
-        g = Math.max(...pts.map((p) => p.gustMph ?? 0)) || null;
-      }
-    }
-    const worst = g ?? v;
-    return {
-      t: s,
-      v,
-      color: worst == null ? "var(--rule)" : worst < 15 ? "var(--river)" : worst < 25 ? "var(--ochre)" : "var(--rust)",
-      h: v == null ? 6 : Math.max(8, Math.min(100, (v / 25) * 100)),
-    };
-  });
   const showNow = now >= t0 && now <= t0 + SPAN;
   const periods = day.periods.filter((p) => p.end > t0 && p.start < t0 + SPAN);
   const ticks = [6, 8, 10, 12, 14, 16, 18, 20, 22];
@@ -326,7 +326,6 @@ function Timeline({
         <div className="tl__grid">
           <div className="tl__labels">
             <span className="label" style={{ height: 22 }}>Light</span>
-            <span className="label" style={{ height: 44 }}>Wind</span>
             <span className="label" style={{ height: 22 }}>Feeding</span>
           </div>
           <div className="tl__lanes">
@@ -335,15 +334,6 @@ function Timeline({
                 <i className="twi" style={{ left: `${pos(day.sun.dawn)}%`, width: `${wid(day.sun.dawn, day.sun.rise)}%` }} />
                 <i className="day" style={{ left: `${pos(day.sun.rise)}%`, width: `${wid(day.sun.rise, day.sun.set)}%` }} />
                 <i className="twi" style={{ left: `${pos(day.sun.set)}%`, width: `${wid(day.sun.set, day.sun.dusk)}%` }} />
-              </div>
-              <div className="tl__wind">
-                {bars.map((b) => (
-                  <i
-                    key={b.t}
-                    style={{ height: `${b.h}%`, background: b.color }}
-                    title={`${clock(b.t)}: ${b.v != null ? `${Math.round(b.v)} mph` : "no data"}`}
-                  />
-                ))}
               </div>
               <div className="tl__feed">
                 {periods.map((p) => (
@@ -376,7 +366,7 @@ function Timeline({
         </div>
       </div>
       <p className="small muted" style={{ margin: "10px 0 0" }}>
-        Sunrise {fmtTime(day.sun.rise)} · sunset {fmtTime(day.sun.set)} · bars: wind mph (station so far, forecast ahead) · solid = major
+        Sunrise {fmtTime(day.sun.rise)} · sunset {fmtTime(day.sun.set)} · solid = major
         solunar, dashed = minor · box = best window
         {win?.avgWind != null ? ` (~${Math.round(win.avgWind)} mph${win.avgTemp != null ? `, ${Math.round(win.avgTemp)}°F` : ""})` : ""}.
       </p>

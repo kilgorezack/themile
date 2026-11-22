@@ -1,6 +1,6 @@
 "use client";
 
-import type { Conditions } from "@/lib/types";
+import type { Conditions, HourlyForecast } from "@/lib/types";
 import { fmtHour } from "@/lib/astro";
 import { cardinal, fmt } from "@/lib/units";
 import { MILE } from "@/lib/config";
@@ -18,7 +18,6 @@ const windColor = (mph: number) => (mph < 15 ? "var(--river)" : mph < 25 ? "var(
 
 export function Forecast({ c, now }: { c: Conditions; now: number }) {
   const hours = c.hourly.filter((h) => h.t >= now - 3600_000).slice(0, 36);
-  const maxWind = Math.max(30, ...hours.map((h) => h.gustMph ?? h.windMph ?? 0));
   const days = c.daily.slice(0, 7);
   const tLo = Math.min(...days.map((d) => d.lowF ?? d.highF ?? 0));
   const tHi = Math.max(...days.map((d) => d.highF ?? d.lowF ?? 0));
@@ -55,65 +54,7 @@ export function Forecast({ c, now }: { c: Conditions; now: number }) {
         </p>
       </Reveal>
 
-      <Reveal className="panel">
-        <div className="panel__head">
-          <h3>Next 36 hours</h3>
-          <div className="small muted" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            {[
-              ["var(--river)", "under 15 mph"],
-              ["var(--ochre)", "15–25"],
-              ["var(--rust)", "25+"],
-            ].map(([col, l]) => (
-              <span key={l} style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                <i style={{ width: 10, height: 10, borderRadius: 2, background: col, display: "inline-block" }} />
-                {l}
-              </span>
-            ))}
-          </div>
-        </div>
-        {hours.length ? (
-          <div className="ribbon" role="list">
-            {hours.map((h, i) => {
-              const w = h.windMph ?? 0;
-              const g = h.gustMph;
-              const prevDay = i > 0 && new Date(hours[i - 1].t).toLocaleDateString("en-US", { timeZone: MILE.timezone }) !== new Date(h.t).toLocaleDateString("en-US", { timeZone: MILE.timezone });
-              return (
-                <div
-                  key={h.t}
-                  role="listitem"
-                  className={`hour ${prevDay ? "is-day-break" : ""}`}
-                  title={`${fmtHour(h.t)}: ${h.conditions}, wind ${Math.round(w)} mph from ${cardinal(h.windDir)}${g ? `, gusts ${Math.round(g)}` : ""}`}
-                >
-                  <span className="hour__t">{prevDay ? new Date(h.t).toLocaleDateString("en-US", { weekday: "short", timeZone: MILE.timezone }) : fmtHour(h.t)}</span>
-                  <WeatherIcon icon={h.icon} size={22} />
-                  <span className="hour__v">{fmt(h.tempF)}°</span>
-                  <div className="hour__bar">
-                    <div
-                      className="hour__wind"
-                      style={{ height: `${(w / maxWind) * 100}%`, background: windColor(g ?? w), transitionDelay: `${i * 18}ms` }}
-                    />
-                    {g != null && <div className="hour__gust" style={{ bottom: `${(g / maxWind) * 100}%` }} />}
-                  </div>
-                  <span className="hour__v">{Math.round(w)}</span>
-                  <svg width="14" height="14" viewBox="0 0 14 14" aria-label={h.windDir != null ? `from ${cardinal(h.windDir)}` : "calm"}>
-                    {h.windDir != null && w > 0 ? (
-                      <path d="M7 1 L7 13 M3 9 L7 13 L11 9" fill="none" stroke="var(--ink-2)" strokeWidth="1.4" strokeLinecap="round" transform={`rotate(${h.windDir} 7 7)`} />
-                    ) : (
-                      <circle cx="7" cy="7" r="2.5" fill="none" stroke="var(--ink-3)" />
-                    )}
-                  </svg>
-                  <span className="hour__t">{h.precipChance ? `${Math.round(h.precipChance)}%` : " "}</span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="muted">Forecast unavailable right now.</p>
-        )}
-        <p className="small muted" style={{ margin: "10px 0 0" }}>
-          Arrows point downwind. Bottom row is chance of precipitation.
-        </p>
-      </Reveal>
+      <NextHours hourly={c.hourly} now={now} />
 
       {days.length > 0 && (
         <Reveal className="panel" delay={100}>
@@ -149,5 +90,83 @@ export function Forecast({ c, now }: { c: Conditions; now: number }) {
         </Reveal>
       )}
     </section>
+  );
+}
+
+
+/** The 36-hour wind ribbon: bars for sustained wind, a tick for gusts, arrows downwind. */
+export function NextHours({
+  hourly,
+  now,
+  className = "panel",
+  delay = 0,
+}: {
+  hourly: HourlyForecast[];
+  now: number;
+  className?: string;
+  delay?: number;
+}) {
+  const hours = hourly.filter((h) => h.t >= now - 3600_000).slice(0, 36);
+  const maxWind = Math.max(30, ...hours.map((h) => h.gustMph ?? h.windMph ?? 0));
+  return (
+        <Reveal className={className} delay={delay}>
+          <div className="panel__head">
+            <h3>Next 36 hours</h3>
+            <div className="small muted" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              {[
+                ["var(--river)", "under 15 mph"],
+                ["var(--ochre)", "15–25"],
+                ["var(--rust)", "25+"],
+              ].map(([col, l]) => (
+                <span key={l} style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                  <i style={{ width: 10, height: 10, borderRadius: 2, background: col, display: "inline-block" }} />
+                  {l}
+                </span>
+              ))}
+            </div>
+          </div>
+          {hours.length ? (
+            <div className="ribbon" role="list">
+              {hours.map((h, i) => {
+                const w = h.windMph ?? 0;
+                const g = h.gustMph;
+                const prevDay = i > 0 && new Date(hours[i - 1].t).toLocaleDateString("en-US", { timeZone: MILE.timezone }) !== new Date(h.t).toLocaleDateString("en-US", { timeZone: MILE.timezone });
+                return (
+                  <div
+                    key={h.t}
+                    role="listitem"
+                    className={`hour ${prevDay ? "is-day-break" : ""}`}
+                    title={`${fmtHour(h.t)}: ${h.conditions}, wind ${Math.round(w)} mph from ${cardinal(h.windDir)}${g ? `, gusts ${Math.round(g)}` : ""}`}
+                  >
+                    <span className="hour__t">{prevDay ? new Date(h.t).toLocaleDateString("en-US", { weekday: "short", timeZone: MILE.timezone }) : fmtHour(h.t)}</span>
+                    <WeatherIcon icon={h.icon} size={22} />
+                    <span className="hour__v">{fmt(h.tempF)}°</span>
+                    <div className="hour__bar">
+                      <div
+                        className="hour__wind"
+                        style={{ height: `${(w / maxWind) * 100}%`, background: windColor(g ?? w), transitionDelay: `${i * 18}ms` }}
+                      />
+                      {g != null && <div className="hour__gust" style={{ bottom: `${(g / maxWind) * 100}%` }} />}
+                    </div>
+                    <span className="hour__v">{Math.round(w)}</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-label={h.windDir != null ? `from ${cardinal(h.windDir)}` : "calm"}>
+                      {h.windDir != null && w > 0 ? (
+                        <path d="M7 1 L7 13 M3 9 L7 13 L11 9" fill="none" stroke="var(--ink-2)" strokeWidth="1.4" strokeLinecap="round" transform={`rotate(${h.windDir} 7 7)`} />
+                      ) : (
+                        <circle cx="7" cy="7" r="2.5" fill="none" stroke="var(--ink-3)" />
+                      )}
+                    </svg>
+                    <span className="hour__t">{h.precipChance ? `${Math.round(h.precipChance)}%` : " "}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="muted">Forecast unavailable right now.</p>
+          )}
+          <p className="small muted" style={{ margin: "10px 0 0" }}>
+            Arrows point downwind{hours.some((h) => h.precipChance) ? ". Bottom row is chance of precipitation." : "."} The tick above each bar is the gust.
+          </p>
+        </Reveal>
   );
 }
