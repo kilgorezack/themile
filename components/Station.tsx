@@ -19,10 +19,13 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
   const hist = c.history;
   const ago = cur ? Math.max(0, Math.round((now - Date.parse(cur.observedAt)) / 60_000)) : null;
 
+  // 10-minute wind is too jittery to read on a phone: roll up to 30-minute
+  // buckets (mean of the average, peak of the gusts).
+  const wind30 = bucket(hist, 30 * 60_000);
   const windSeries = [
-    { key: "wind", label: "Average", color: "var(--river)", area: true, points: hist.map((h) => ({ t: h.t, v: h.windMph })) },
-    { key: "gust", label: "Gust", color: "var(--rust)", dashed: true, points: hist.map((h) => ({ t: h.t, v: h.gustMph })) },
-  ];
+    { key: "wind", label: "Average", color: "var(--river)", area: true, points: wind30.map((h) => ({ t: h.t, v: h.wind })) },
+    { key: "gust", label: "Peak gust", color: "var(--rust)", points: wind30.map((h) => ({ t: h.t, v: h.gust })) },
+  ].filter((s) => s.points.some((p) => p.v != null));
   const tempSeries = [{ key: "temp", label: "Air", color: "var(--ochre)", area: true, points: hist.map((h) => ({ t: h.t, v: h.tempF })) }];
   const presSeries = [{ key: "pres", label: "Pressure", color: "var(--slate)", points: hist.map((h) => ({ t: h.t, v: h.pressureInHg })) }];
   const hasHist = hist.length > 3;
@@ -73,37 +76,35 @@ export function Station({ c, now }: { c: Conditions; now: number }) {
           </div>
           <div className="compass-wrap" style={{ position: "relative" }}>
             <Compass dir={cur?.windDir ?? null} speed={cur?.windMph ?? null} gust={cur?.gustMph ?? null} />
-            <div>
-              <div className="kv" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>
-                <div>
-                  <div className="label">Avg</div>
-                  <div className="v">{fmt(cur?.windMph)} mph</div>
-                </div>
-                <div>
-                  <div className="label">Gust</div>
-                  <div className="v">{fmt(cur?.gustMph)} mph</div>
-                </div>
-                <div>
-                  <div className="label">Lull</div>
-                  <div className="v">{fmt(cur?.lullMph)} mph</div>
-                </div>
+            <div className="kv kv--stack">
+              <div>
+                <div className="label">Avg</div>
+                <div className="v">{fmt(cur?.windMph)} mph</div>
               </div>
-              {hasHist && (
-                <div style={{ marginTop: 14 }}>
-                  <TimeSeries
-                    label="Wind over the last 24 hours"
-                    series={windSeries}
-                    height={130}
-                    yMinFloor={0}
-                    format={(v) => `${Math.round(v)}`}
-                    formatT={fmtHour}
-                    xTicks={4}
-                  />
-                  <Legend items={windSeries.map((s) => ({ label: s.label, color: s.color, dashed: s.dashed }))} />
-                </div>
-              )}
+              <div>
+                <div className="label">Gust</div>
+                <div className="v">{fmt(cur?.gustMph)} mph</div>
+              </div>
+              <div>
+                <div className="label">Lull</div>
+                <div className="v">{fmt(cur?.lullMph)} mph</div>
+              </div>
             </div>
           </div>
+          {hasHist && (
+            <div style={{ marginTop: 18, position: "relative" }}>
+              <TimeSeries
+                label="Wind over the last 24 hours"
+                series={windSeries}
+                height={140}
+                yMinFloor={0}
+                format={(v) => `${Math.round(v)}`}
+                formatT={fmtHour}
+                xTicks={4}
+              />
+              <Legend items={windSeries.map((s) => ({ label: s.label, color: s.color }))} />
+            </div>
+          )}
         </Reveal>
 
         {/* Air temp */}
@@ -213,4 +214,22 @@ function uvNote(uv: number | null) {
   if (uv < 6) return "Moderate. High-desert sun adds up.";
   if (uv < 8) return "High. Sunscreen and sun gloves.";
   return "Very high. Cover up — it's 5,900 ft.";
+}
+
+function bucket(hist: Conditions["history"], ms: number) {
+  const m = new Map<number, { w: number[]; g: number[] }>();
+  for (const h of hist) {
+    const k = Math.floor(h.t / ms) * ms;
+    const b = m.get(k) ?? { w: [], g: [] };
+    if (h.windMph != null) b.w.push(h.windMph);
+    if (h.gustMph != null) b.g.push(h.gustMph);
+    m.set(k, b);
+  }
+  return [...m.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([t, b]) => ({
+      t: t + ms / 2,
+      wind: b.w.length ? b.w.reduce((x, y) => x + y, 0) / b.w.length : null,
+      gust: b.g.length ? Math.max(...b.g) : null,
+    }));
 }

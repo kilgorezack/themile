@@ -14,6 +14,8 @@ import { Forecast } from "./Forecast";
 import { Sky } from "./Sky";
 import { Hatches } from "./Hatches";
 import { Reveal } from "./Reveal";
+import { RiverMap } from "./RiverMap";
+import { MILE_GEO } from "@/lib/mileGeo";
 import { HATCHES } from "@/lib/hatches";
 import { MILE } from "@/lib/config";
 
@@ -85,9 +87,9 @@ export function Dashboard({ conditions, water, serverNow }: { conditions: Condit
             <Reveal className="panel span-5" delay={80}>
               <div className="panel__head">
                 <h3>The Mile</h3>
-                <span className="label">≈ 5.5 river miles</span>
+                <span className="label">≈ {MILE_GEO.mileMiles} river mi at full pool</span>
               </div>
-              <RiverSchematic flow={flow} />
+              <RiverMap flow={flow} />
             </Reveal>
           </div>
         </section>
@@ -170,58 +172,6 @@ function TopBar({ stale, observedAt, now }: { stale: boolean; observedAt: string
   );
 }
 
-/** Seminoe → Kortes → the Mile → Pathfinder, with the current flowing. */
-function RiverSchematic({ flow }: { flow: number | null }) {
-  const speed = flow ? Math.max(0.5, 3.2 - Math.log10(flow)) : 2;
-  return (
-    <div className="map">
-      <svg viewBox="0 0 420 300" role="img" aria-label="Schematic of the Miracle Mile from Seminoe Reservoir through Kortes Dam to Pathfinder Reservoir">
-        {/* Seminoe */}
-        <path d="M20 250 C40 220 110 215 140 240 C160 258 120 290 70 285 C30 282 10 270 20 250 Z" fill="color-mix(in srgb, var(--slate) 30%, var(--card))" stroke="var(--slate)" />
-        <text x="40" y="262" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-2)" letterSpacing="1">SEMINOE RES.</text>
-        {/* Kortes */}
-        <rect x="150" y="210" width="28" height="8" rx="2" fill="var(--ink)" transform="rotate(-35 164 214)" />
-        <text x="186" y="232" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-2)" letterSpacing="1">KORTES DAM</text>
-        {/* The Mile */}
-        <path id="mile" d="M164 214 C190 170 160 150 200 120 S250 100 260 70 S300 40 320 46" fill="none" stroke="var(--river)" strokeWidth="9" strokeLinecap="round" opacity="0.35" />
-        <path
-          className="flowline"
-          d="M164 214 C190 170 160 150 200 120 S250 100 260 70 S300 40 320 46"
-          fill="none"
-          stroke="var(--river)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          style={{ animationDuration: `${speed}s` }}
-        />
-        <text fontFamily="var(--font-display)" fontStyle="italic" fontSize="20" fill="var(--ink)">
-          <textPath href="#mile" startOffset="28%">
-            the Miracle Mile
-          </textPath>
-        </text>
-        {/* Pathfinder */}
-        <path d="M300 40 C330 10 400 14 410 40 C418 64 380 80 350 70 C320 62 290 60 300 40 Z" fill="color-mix(in srgb, var(--slate) 30%, var(--card))" stroke="var(--slate)" />
-        <text x="318" y="96" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-2)" letterSpacing="1">PATHFINDER RES.</text>
-        {/* north arrow */}
-        <g transform="translate(40 40)" fill="none" stroke="var(--ink-3)">
-          <path d="M0 18 L0 -6 M-5 0 L0 -8 L5 0" strokeWidth="1.4" />
-          <text x="-4" y="32" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-3)" stroke="none">N</text>
-        </g>
-        {flow != null && (
-          <g>
-            <rect x="214" y="150" width="96" height="30" rx="4" fill="var(--ink)" />
-            <text x="262" y="170" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="13" fill="var(--paper)">
-              {Math.round(flow)} cfs
-            </text>
-          </g>
-        )}
-      </svg>
-      <p className="small muted" style={{ margin: "4px 0 0" }}>
-        Not to scale. Seminoe and Kortes dams regulate the flow; trout run up out of Pathfinder to spawn each spring and fall.
-      </p>
-    </div>
-  );
-}
-
 function Footer({ source, fetchedAt }: { source: string | null; fetchedAt: string }) {
   return (
     <footer className="footer">
@@ -230,10 +180,6 @@ function Footer({ source, fetchedAt }: { source: string | null; fetchedAt: strin
           <div className="wordmark" style={{ fontSize: 28 }}>
             The Mile
           </div>
-          <p style={{ maxWidth: "42ch" }}>
-            Conditions for the Miracle Mile of the North Platte River, between Kortes Dam and Pathfinder Reservoir in Carbon County,
-            Wyoming. Data is preliminary and provided as-is — always use your own judgment on the water.
-          </p>
         </div>
         <div>
           <div className="label">Data</div>
