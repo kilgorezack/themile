@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage, LEGAL, Mail } from "@/components/legal/LegalPage";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — Milecast",
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
+  absoluteTitle: "Privacy Policy — Milecast",
   description: "What Milecast collects on the website and iOS app, why, who it's shared with, and how to delete it.",
-};
+  path: "/privacy",
+});
 
 const sections = [
   {

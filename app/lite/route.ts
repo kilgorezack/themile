@@ -39,7 +39,10 @@ export async function GET(req: Request) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 ${auto ? '<meta http-equiv="refresh" content="300">' : ""}
-<title>The Mile · lite</title>
+<title>Lite — The Mile</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-icon.png">
 <style>
 body{margin:0 auto;max-width:34em;padding:12px 14px 24px;font:16px/1.4 system-ui,sans-serif;background:#f4efe4;color:#1c231f}
 h1{font-size:20px;margin:0}h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#5b645d;margin:20px 0 6px;border-bottom:1px solid #d4cab6;padding-bottom:3px}
