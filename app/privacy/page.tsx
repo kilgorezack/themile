@@ -30,7 +30,7 @@ const sections = [
           <li>
             <strong>Account.</strong> Your email address and how you signed in (Google, Apple or email and password). If you use
             Sign in with Apple and choose &ldquo;Hide My Email,&rdquo; we only receive Apple&rsquo;s relay address. Passwords are
-            handled by Firebase Authentication; we never see or store them.
+            handled by Google Cloud Platform; we never see or store them.
           </li>
           <li>
             <strong>Profile.</strong> Your first and last name, and, if you add one, a profile photo. In the app we crop the photo
@@ -52,12 +52,12 @@ const sections = [
         <h3>Information collected automatically</h3>
         <ul>
           <li>
-            <strong>Usage analytics.</strong> We use Google Analytics for Firebase to count visits, screens and features used, and
-            Microsoft Clarity on the website to see how pages are used through heatmaps and session replays (clicks, scrolling and
-            mouse movement). Clarity masks text you type into forms.
+            <strong>Usage analytics.</strong> We use analytics from Google Cloud Platform to count visits, screens and features used,
+            and an analytics service from Microsoft Corporation on the website to see how pages are used through heatmaps and
+            session replays (clicks, scrolling and mouse movement). Text you type into forms is masked.
           </li>
           <li>
-            <strong>Device and log data.</strong> Like most websites, our hosting provider (Vercel) and the services above receive
+            <strong>Device and log data.</strong> Like most websites, the services that run Milecast receive
             your IP address, browser or device type, operating system, and pages requested.
           </li>
           <li>
@@ -111,7 +111,7 @@ const sections = [
         </p>
         <ul>
           <li>
-            <strong>Google Firebase</strong>: sign-in, your profile database, photo storage and analytics.
+            <strong>Google Cloud Platform</strong>: sign-in, your profile database, photo storage and analytics.
           </li>
           <li>
             <strong>Google</strong> and <strong>Apple</strong>: if you sign in with them.
@@ -120,10 +120,7 @@ const sections = [
             <strong>Apple</strong>: App Store purchases and subscriptions, push notifications, and Apple Maps.
           </li>
           <li>
-            <strong>Microsoft Clarity</strong>: website usage analytics.
-          </li>
-          <li>
-            <strong>Vercel</strong>: website hosting.
+            <strong>Microsoft Corporation</strong>: website usage analytics.
           </li>
         </ul>
         <p>
@@ -139,8 +136,8 @@ const sections = [
     body: (
       <p>
         We keep your account and profile until you delete your account. Analytics data is kept for the retention period set
-        with each analytics provider (up to 14 months for Google Analytics; Clarity keeps session replays for up to 30 days). Server
-        logs are kept for a short time by our hosting provider.
+        with each analytics provider (up to 14 months; session replays are kept for up to 30 days). Server
+        logs are kept only for a short time.
       </p>
     ),
   },
