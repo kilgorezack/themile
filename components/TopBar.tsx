@@ -65,9 +65,6 @@ export function TopBar({
             </a>
           ))}
         </nav>
-        <a href="/pricing" className="topbar__pricing">
-          Pricing
-        </a>
         <AccountButton />
       </div>
     </div>
