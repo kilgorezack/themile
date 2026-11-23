@@ -74,6 +74,36 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    // App Store subscription as the iOS app last saw it, including Apple's
+    // signed transaction (`jws`). This is a record only: it never grants
+    // anything. A server verifies `jws` with Apple and then sets `plan` on the
+    // profile, which clients still can't write.
+    function validAppStore(d) {
+      return d.keys().hasOnly([
+          'productId', 'isActive', 'transactionId', 'originalTransactionId',
+          'purchaseDate', 'originalPurchaseDate', 'expirationDate',
+          'environment', 'ownershipType', 'appAccountToken', 'jws', 'updatedAt'
+        ])
+        && d.productId in ['one.milecast.monthly', 'one.milecast.yearly']
+        && d.isActive is bool
+        && d.transactionId is string && d.transactionId.size() <= 64
+        && d.originalTransactionId is string && d.originalTransactionId.size() <= 64
+        && d.purchaseDate is timestamp
+        && d.originalPurchaseDate is timestamp
+        && (!('expirationDate' in d) || d.expirationDate is timestamp)
+        && d.environment is string && d.environment.size() <= 32
+        && d.ownershipType is string && d.ownershipType.size() <= 32
+        && (!('appAccountToken' in d) || (d.appAccountToken is string && d.appAccountToken.size() <= 64))
+        && d.jws is string && d.jws.size() <= 20000
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid}/subscriptions/{store} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && store == 'appStore' && validAppStore(request.resource.data);
+      allow delete: if isOwner(uid);
+    }
+
     // Everything else is closed unless a rule above opens it.
     match /{document=**} {
       allow read, write: if false;
