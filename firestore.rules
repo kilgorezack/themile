@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Milecast / The Mile — one account shared by the website and the iOS app.
+// Profiles live at users/{uid}. Each user can read and write only their own,
+// with every field type- and size-checked. `plan` (free | one) is written only
+// by the server (Admin SDK: StoreKit / Stripe webhooks), never by clients.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function optString(d, k, max) {
+      return !(k in d) || (d[k] is string && d[k].size() <= max);
+    }
+
+    function validFishing(f) {
+      return f is map
+        && f.keys().hasOnly(['methods', 'styles', 'experience', 'frequency', 'isGuide', 'homeBase'])
+        && (!('methods' in f) || (f.methods is list && f.methods.size() <= 3 && f.methods.hasOnly(['fly', 'spin', 'bait'])))
+        && (!('styles' in f) || (f.styles is list && f.styles.size() <= 3 && f.styles.hasOnly(['wade', 'boat', 'bank'])))
+        && (!('experience' in f) || f.experience in ['new', 'some', 'lifer'])
+        && (!('frequency' in f) || f.frequency in ['few', 'monthly', 'weekly'])
+        && (!('isGuide' in f) || f.isGuide is bool)
+        && optString(f, 'homeBase', 80);
+    }
+
+    function validAlerts(a) {
+      return a is map
+        && a.keys().hasOnly(['flow', 'calm', 'lightning', 'outlook'])
+        && (!('flow' in a) || a.flow is bool)
+        && (!('calm' in a) || a.calm is bool)
+        && (!('lightning' in a) || a.lightning is bool)
+        && (!('outlook' in a) || a.outlook is bool);
+    }
+
+    function validProfile(d) {
+      return d.keys().hasOnly([
+          'firstName', 'lastName', 'displayName', 'email', 'photoURL',
+          'fishing', 'alerts', 'dashboardLayout',
+          'createdVia', 'createdAt', 'updatedAt', 'onboardedAt', 'plan'
+        ])
+        && optString(d, 'firstName', 60)
+        && optString(d, 'lastName', 60)
+        && optString(d, 'displayName', 121)
+        && optString(d, 'email', 254)
+        && (!('photoURL' in d) || d.photoURL == null || (d.photoURL is string && d.photoURL.size() <= 2048))
+        && (!('fishing' in d) || validFishing(d.fishing))
+        && (!('alerts' in d) || validAlerts(d.alerts))
+        && (!('dashboardLayout' in d) || d.dashboardLayout is map)
+        && (!('createdVia' in d) || d.createdVia in ['ios', 'web'])
+        && (!('createdAt' in d) || d.createdAt is timestamp)
+        && (!('updatedAt' in d) || d.updatedAt is timestamp)
+        && (!('onboardedAt' in d) || d.onboardedAt is timestamp);
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && validProfile(request.resource.data)
+        && !('plan' in request.resource.data);
+
+      // createdAt / createdVia are set once; plan only ever changes server-side.
+      allow update: if isOwner(uid)
+        && validProfile(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'createdAt', 'createdVia']);
+
+      allow delete: if isOwner(uid);
+    }
+
+    // Everything else is closed unless a rule above opens it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
