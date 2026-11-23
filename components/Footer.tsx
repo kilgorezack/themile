@@ -34,6 +34,9 @@ export function Footer({ source, fetchedAt }: { source: string | null; fetchedAt
             <div className="label">Before you go</div>
             <ul>
               <li>
+                <a href="/pricing">Pricing</a>
+              </li>
+              <li>
                 <a href="https://wgfd.wyo.gov/fishing-boating" rel="noreferrer">WGFD regulations</a>
               </li>
               <li>

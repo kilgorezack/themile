@@ -26,6 +26,7 @@ The page renders on the server (re-generated every 2 minutes) and the browser po
 | `/conditions` | Members: the full scrolling conditions report |
 | `/dashboard` | Customizable tile dashboard (show/hide, reorder, resize). Layout lives in `lib/dashboard/layout.ts`; today it's saved per browser via `browserLayoutStore`, and a Firestore-backed `LayoutStore` can drop in once Firebase Auth gates the page. |
 | `/map` | Pan/zoom map from Seminoe to Alcova with layer toggles. Dams (USBR Hydromet: release, inflow, storage, elevation) and USGS gauges; tap a site for history. `?site=<id>` deep-links (ids in `lib/sites.ts`). Field map / Satellite switch; satellite uses Apple MapKit JS (setup: `docs/apple-maps.md`). |
+| `/pricing` | Plans: Free (Home, Conditions, Low-data) and Milecast One ($4.99/mo or $29.99/yr: dashboard, field map, satellite). Checkout not wired yet. |
 | `/lite` | Low-data page (below) |
 
 Map geometry (`lib/regionGeo.ts`, `lib/mileGeo.ts`) is generated from USGS NHD waterbodies and NLDI flowlines.

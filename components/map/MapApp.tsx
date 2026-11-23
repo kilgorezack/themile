@@ -69,7 +69,7 @@ export function MapApp({ region, serverNow, initialSite }: { region: RegionData;
   return (
     <>
       <TopBar active="map" now={now} />
-      <RequireAuth feature="Map" blurb="Seminoe to Alcova: every dam's release, inflow, storage and elevation, plus the river gauges, on one map you can explore.">
+      <RequireAuth plans feature="Map" blurb="Seminoe to Alcova: every dam's release, inflow, storage and elevation, plus the river gauges, on one map you can explore.">
         <MapView region={region} initialSite={initialSite} />
       </RequireAuth>
       <Footer source={null} fetchedAt={region.fetchedAt} />

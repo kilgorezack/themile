@@ -8,7 +8,18 @@ import { useAuth } from "./AuthProvider";
  * private later should also be enforced server-side (Firebase Admin token check
  * or Firestore Security Rules).
  */
-export function RequireAuth({ feature, blurb, children }: { feature: string; blurb: string; children: React.ReactNode }) {
+export function RequireAuth({
+  feature,
+  blurb,
+  plans = false,
+  children,
+}: {
+  feature: string;
+  blurb: string;
+  /** part of Milecast One: show a link to the pricing page */
+  plans?: boolean;
+  children: React.ReactNode;
+}) {
   const { user, loading, openSignIn } = useAuth();
 
   if (loading)
@@ -26,7 +37,7 @@ export function RequireAuth({ feature, blurb, children }: { feature: string; blu
             <rect x="5" y="11" width="14" height="10" rx="2" />
             <path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
-          <div className="label">Members</div>
+          <div className="label">{plans ? "Milecast One" : "Free account"}</div>
           <h1>{feature}</h1>
           <p className="muted">{blurb}</p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
@@ -37,6 +48,11 @@ export function RequireAuth({ feature, blurb, children }: { feature: string; blu
               Back to home
             </a>
           </div>
+          {plans && (
+            <a href="/pricing" className="small">
+              See plans and pricing →
+            </a>
+          )}
         </div>
       </div>
     );

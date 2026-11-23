@@ -28,7 +28,7 @@ export function TopBar({
   variant?: "hero" | "solid";
   /** hero variant: px scrolled before the bar turns solid (default 60% of the viewport) */
   solidAfter?: number;
-  active: TabId;
+  active: TabId | null;
   stale?: boolean;
   observedAt?: string | null;
   now: number;
@@ -65,6 +65,9 @@ export function TopBar({
             </a>
           ))}
         </nav>
+        <a href="/pricing" className="topbar__pricing">
+          Pricing
+        </a>
         <AccountButton />
       </div>
     </div>

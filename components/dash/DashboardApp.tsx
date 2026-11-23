@@ -68,7 +68,7 @@ export function DashboardApp({
   return (
     <>
       <TopBar active="dashboard" stale={stale} observedAt={c.current?.observedAt ?? null} now={now} />
-      <RequireAuth feature="Dashboard" blurb="Every reading on one screen: station, flows, reservoirs, gauges and the outlook. Arrange the tiles your way.">
+      <RequireAuth plans feature="Dashboard" blurb="Every reading on one screen: station, flows, reservoirs, gauges and the outlook. Arrange the tiles your way.">
       <main className="wrap dash">
         <header className="dash__head">
           <div>
