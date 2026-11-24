@@ -121,6 +121,16 @@ service cloud.firestore {
       allow create, update: if isOwner(uid) && token.size() <= 4096 && validDevice(request.resource.data, token);
     }
 
+    // Notification inbox: a copy of each alert sent to this person, written
+    // by the alert sender (Admin SDK). The owner can read, delete, and flip
+    // `read`; nothing else.
+    match /users/{uid}/notifications/{id} {
+      allow read, delete: if isOwner(uid);
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read is bool;
+    }
+
     // Everything else is closed unless a rule above opens it.
     match /{document=**} {
       allow read, write: if false;

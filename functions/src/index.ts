@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { getMessaging, type MulticastMessage } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
 import { onRequest } from "firebase-functions/v2/https";
@@ -9,6 +9,9 @@ import { decide, type Alert, type AlertState, type Summary } from "./alerts";
 
 initializeApp();
 const db = getFirestore();
+
+/** An alert, or the test message (`kind: "test"`). */
+type Message = Omit<Alert, "kind"> & { kind: string };
 
 const SUMMARY_URL = "https://mile.fish/api/summary";
 const REGION = "us-central1";
@@ -43,15 +46,40 @@ export const sendAlerts = onSchedule(
 /** Pushes one alert to every device of every user with that alert turned on. */
 async function sendToSubscribers(alert: Alert) {
   const users = await db.collection("users").where(`alerts.${alert.kind}`, "==", true).select().get();
+  // Inbox first, so tapping the push can find (and mark read) its entry.
+  const id = await saveToInbox(alert, users.docs.map((u) => u.id));
   const tokens: { token: string; path: string }[] = [];
   for (const u of users.docs) {
     const devices = await u.ref.collection("devices").get();
     for (const d of devices.docs) tokens.push({ token: d.id, path: d.ref.path });
   }
-  return send(alert, tokens);
+  return send(alert, tokens, id);
 }
 
-async function send(alert: Alert, tokens: { token: string; path: string }[]) {
+/**
+ * Keeps a copy of the alert in each person's inbox at
+ * users/{uid}/notifications/{id}, which the app's notifications page lists.
+ * Every copy shares one id, which the push carries as `notificationId`.
+ */
+async function saveToInbox(alert: Message, uids: string[]): Promise<string> {
+  const id = db.collection("users").doc().id;
+  const entry = {
+    kind: alert.kind,
+    title: alert.title,
+    body: alert.body,
+    link: alert.link,
+    read: false,
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  for (let i = 0; i < uids.length; i += 400) {
+    const batch = db.batch();
+    for (const uid of uids.slice(i, i + 400)) batch.set(db.doc(`users/${uid}/notifications/${id}`), entry);
+    await batch.commit();
+  }
+  return id;
+}
+
+async function send(alert: Message, tokens: { token: string; path: string }[], notificationId: string) {
   let ok = 0, failed = 0, removed = 0;
   const errors = new Set<string>();
   for (let i = 0; i < tokens.length; i += 500) {
@@ -59,7 +87,7 @@ async function send(alert: Alert, tokens: { token: string; path: string }[]) {
     const message: MulticastMessage = {
       tokens: batch.map((t) => t.token),
       notification: { title: alert.title, body: alert.body },
-      data: { kind: alert.kind, link: alert.link },
+      data: { kind: alert.kind, link: alert.link, notificationId },
       apns: {
         payload: { aps: { sound: "default", "thread-id": alert.kind } },
         headers: { "apns-priority": "10" },
@@ -116,10 +144,14 @@ export const testPush = onRequest({ region: REGION, cors: false, memory: "256MiB
     res.status(404).json({ error: "This account has no devices registered for notifications yet." });
     return;
   }
-  const result = await send(
-    { kind: "flow", title: "Milecast notifications are on", body: "This is a test. Alerts you turn on will arrive like this.", link: "milecast://home" },
-    devices.docs.map((d) => ({ token: d.id, path: d.ref.path })),
-  );
+  const test = {
+    kind: "test",
+    title: "Milecast notifications are on",
+    body: "This is a test. Alerts you turn on will arrive like this, and stay here in Notifications.",
+    link: "milecast://home",
+  };
+  const id = await saveToInbox(test, [uid]);
+  const result = await send(test, devices.docs.map((d) => ({ token: d.id, path: d.ref.path })), id);
   // FCM answers per device; a test that reached none of them is a failure.
   if (result.ok === 0) {
     res.status(502).json({ ...result, error: testFailureMessage(result.errors) });
