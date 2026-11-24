@@ -104,6 +104,23 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    // Push notification devices: one document per FCM registration token,
+    // written by the app on this device and read only by the alert sender
+    // (Admin SDK). Removed on sign-out.
+    function validDevice(d, token) {
+      return d.keys().hasOnly(['token', 'platform', 'appVersion', 'tz', 'updatedAt'])
+        && d.token == token
+        && d.platform in ['ios', 'web']
+        && optString(d, 'appVersion', 32)
+        && optString(d, 'tz', 64)
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid}/devices/{token} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && token.size() <= 4096 && validDevice(request.resource.data, token);
+    }
+
     // Everything else is closed unless a rule above opens it.
     match /{document=**} {
       allow read, write: if false;
