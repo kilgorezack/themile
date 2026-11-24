@@ -4,6 +4,7 @@ import Script from "next/script";
 import { FirebaseInit } from "@/components/FirebaseInit";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SignInDialog } from "@/components/auth/SignInDialog";
+import { ProfileDialog } from "@/components/auth/ProfileDialog";
 import { SHARE_IMAGE } from "@/lib/seo";
 import "./globals.css";
 
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           {children}
           <SignInDialog />
+          <ProfileDialog />
         </AuthProvider>
         <FirebaseInit />
         {/* Microsoft Clarity analytics */}

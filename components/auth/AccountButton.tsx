@@ -5,7 +5,7 @@ import { useAuth } from "./AuthProvider";
 
 /** Top-right: "Sign in" when signed out, an avatar + menu when signed in. */
 export function AccountButton() {
-  const { user, loading, openSignIn, signOut } = useAuth();
+  const { user, loading, profile, openSignIn, openProfile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
@@ -30,7 +30,10 @@ export function AccountButton() {
       </button>
     );
 
-  const label = user.displayName || user.email || "Account";
+  // Prefer the shared profile (updated live from the app), then the sign-in account.
+  const name = (profile && [profile.firstName, profile.lastName].map((x) => x.trim()).filter(Boolean).join(" ")) || user.displayName;
+  const photo = profile?.photoURL || user.photoURL;
+  const label = name || user.email || "Account";
   const initials = label
     .split(/[\s@.]+/)
     .filter(Boolean)
@@ -41,9 +44,9 @@ export function AccountButton() {
   return (
     <div className="acct" ref={wrap}>
       <button type="button" className="acct__avatar" aria-haspopup="menu" aria-expanded={open} aria-label={`Account: ${label}`} onClick={() => setOpen((o) => !o)}>
-        {user.photoURL ? (
+        {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.photoURL} alt="" referrerPolicy="no-referrer" width={32} height={32} />
+          <img src={photo} alt="" referrerPolicy="no-referrer" width={32} height={32} />
         ) : (
           <span>{initials}</span>
         )}
@@ -51,9 +54,19 @@ export function AccountButton() {
       {open && (
         <div className="acct__menu" role="menu">
           <div className="acct__who">
-            {user.displayName && <strong>{user.displayName}</strong>}
+            {name && <strong>{name}</strong>}
             <span className="muted small">{user.email}</span>
           </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              openProfile();
+            }}
+          >
+            Edit profile
+          </button>
           <a role="menuitem" href="/dashboard">
             Dashboard
           </a>

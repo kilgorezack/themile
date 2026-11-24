@@ -2137,6 +2137,201 @@ h3 {
   justify-content: space-between;
   gap: 12px;
 }
+/* Edit profile dialog (same fields as Account in the iOS app) */
+.profd {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100svh - 32px);
+}
+.profd__form {
+  gap: 18px;
+}
+.profd fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.profd legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font: 500 11px var(--font-mono), monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.profd__who {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.profd__who > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.profd__who strong {
+  font: 600 18px var(--font-body), sans-serif;
+}
+.profd__photo {
+  position: relative;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--river);
+  color: #fff;
+  font: 600 22px var(--font-body), sans-serif;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.profd__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profd__photo em {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 3px 0 5px;
+  background: rgba(12, 16, 14, 0.55);
+  color: #fff;
+  font: 600 11px var(--font-body), sans-serif;
+  font-style: normal;
+}
+.profd__photo:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+.profd__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .profd__row {
+    grid-template-columns: 1fr;
+  }
+}
+.profd__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.profd select {
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px var(--font-body), sans-serif;
+}
+.profd select:focus {
+  outline: 2px solid var(--river);
+  outline-offset: 1px;
+}
+.profd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.profd__chips button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 14px var(--font-body), sans-serif;
+  cursor: pointer;
+}
+.profd__chips button[aria-pressed="true"] {
+  background: var(--river);
+  border-color: var(--river);
+  color: var(--paper);
+}
+.authd__form .profd__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule-2);
+  cursor: pointer;
+}
+.authd__form .profd__switch input {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 0;
+  background: var(--rule);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.authd__form .profd__switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s var(--ease-out);
+}
+.authd__form .profd__switch input:checked {
+  background: var(--river);
+}
+.authd__form .profd__switch input:checked::after {
+  transform: translateX(18px);
+}
+.profd__plan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+.profd__plan a {
+  color: var(--river);
+  font-weight: 500;
+}
+.profd__active {
+  color: var(--good);
+}
+.profd__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.profd__actions .btn {
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+}
+.profd__actions .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.profd__sync {
+  text-align: right;
+}
+
 .authd__links button {
   background: none;
   border: 0;
