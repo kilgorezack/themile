@@ -16,7 +16,7 @@ const display = Fraunces({
 const body = Public_Sans({ subsets: ["latin"], variable: "--font-body" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono" });
 
-const SITE_URL = "https://www.mile.fish";
+const SITE_URL = "https://mile.fish";
 const DESCRIPTION =
   "Live weather from the Mile, Kortes Dam releases, reservoir levels, forecast wind, solunar windows and hatches for the Miracle Mile of the North Platte River, Wyoming.";
 const SHARE_DESCRIPTION = "Live flows, wind, weather and hatches on the Miracle Mile of the North Platte River, Wyoming.";
