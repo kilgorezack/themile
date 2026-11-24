@@ -1234,6 +1234,19 @@ h3 {
   flex-wrap: wrap;
   gap: 6px 20px;
 }
+.footer__recaptcha {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.footer__recaptcha a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* reCAPTCHA (Firebase App Check) badge: hidden; attribution is in the footer instead, as Google allows. */
+.grecaptcha-badge {
+  visibility: hidden;
+}
 
 /* Reveal on scroll */
 .reveal {

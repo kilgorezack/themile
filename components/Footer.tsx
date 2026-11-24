@@ -32,6 +32,11 @@ export function Footer({ fetchedAt }: { source?: string | null; fetchedAt: strin
           </span>
           <span className="mono">Updated {updated} MT · preliminary data</span>
         </div>
+        <p className="footer__recaptcha">
+          This site is protected by reCAPTCHA. The Google{" "}
+          <a href="https://policies.google.com/privacy" rel="noreferrer">Privacy Policy</a> and{" "}
+          <a href="https://policies.google.com/terms" rel="noreferrer">Terms of Service</a> apply.
+        </p>
       </div>
     </footer>
   );
