@@ -89,7 +89,14 @@ async function send(alert: Message, tokens: { token: string; path: string }[], n
       notification: { title: alert.title, body: alert.body },
       data: { kind: alert.kind, link: alert.link, notificationId },
       apns: {
-        payload: { aps: { sound: "default", "thread-id": alert.kind } },
+        payload: {
+          aps: {
+            sound: "default",
+            "thread-id": alert.kind,
+            // Lightning breaks through Focus (the app has the Time Sensitive entitlement).
+            ...(alert.kind === "lightning" ? { "interruption-level": "time-sensitive" } : {}),
+          },
+        },
         headers: { "apns-priority": "10" },
       },
     };
