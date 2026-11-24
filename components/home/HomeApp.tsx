@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Conditions, WaterData } from "@/lib/types";
 import { activePeriod, fmtTime, nextPeriod, skyDay, type SkyDay } from "@/lib/astro";
 import { bestWindow, type BestWindow } from "@/lib/bestWindow";
@@ -323,6 +324,63 @@ function Timeline({
   const periods = day.periods.filter((p) => p.end > t0 && p.start < t0 + SPAN);
   const ticks = [6, 8, 10, 12, 14, 16, 18, 20, 22];
 
+  // Hover (or tap) explains whatever is under the pointer. Worked out from the
+  // pointer position, since the best-window box sits on top of the feeding bars.
+  const lanesRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ x: number; y: number; lines: { head: string; body: string }[] } | null>(null);
+  const LANE = 22, GAP = 10;
+
+  const explain = (t: number, lane: "light" | "feed") => {
+    const lines: { head: string; body: string }[] = [];
+    const { dawn, rise, set, dusk } = day.sun;
+    if (lane === "light") {
+      if (t < dawn) lines.push({ head: "Dark", body: `First light at ${fmtTime(dawn)}.` });
+      else if (t < rise) lines.push({ head: `Morning twilight · ${fmtTime(dawn)}–${fmtTime(rise)}`, body: "Light enough to rig up and walk in before sunrise." });
+      else if (t < set) lines.push({ head: `Daylight · ${fmtTime(rise)}–${fmtTime(set)}`, body: "Sunrise to sunset." });
+      else if (t < dusk) lines.push({ head: `Evening twilight · ${fmtTime(set)}–${fmtTime(dusk)}`, body: "Last light after sunset. Often a good last hour." });
+      else lines.push({ head: "Dark", body: `Last light at ${fmtTime(dusk)}.` });
+    } else {
+      const p = periods.find((p) => t >= p.start && t <= p.end);
+      if (p)
+        lines.push({
+          head: `${p.kind === "major" ? "Major" : "Minor"} solunar · ${fmtTime(p.start)}–${fmtTime(p.end)}`,
+          body:
+            p.kind === "major"
+              ? `${p.why}. The strongest of the moon's feeding periods; fish tend to be most active.`
+              : `${p.why}. A shorter, weaker feeding period than a major.`,
+        });
+      else lines.push({ head: "No solunar period", body: "Solid bars are major feeding periods, dashed are minor." });
+    }
+    if (win && t >= win.start && t <= win.end)
+      lines.push({
+        head: `Best window · ${span(win.start, win.end)}`,
+        body: `The calmest, warmest daylight stretch${
+          win.avgWind != null ? ` (~${Math.round(win.avgWind)} mph${win.avgTemp != null ? `, ${Math.round(win.avgTemp)}°F` : ""})` : ""
+        }${win.solunar ? ", overlapping a solunar period" : ""}.`,
+      });
+    return lines;
+  };
+
+  // The tooltip follows the pointer; scrolling the page would leave it behind.
+  useEffect(() => {
+    if (!tip) return;
+    const hide = () => setTip(null);
+    window.addEventListener("scroll", hide, { passive: true });
+    return () => window.removeEventListener("scroll", hide);
+  }, [tip]);
+  const touched = useRef(false);
+
+  const onPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    touched.current = e.pointerType === "touch";
+    const box = lanesRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const x = e.clientX - box.left, y = e.clientY - box.top;
+    const lane = y < LANE + GAP / 2 ? "light" : y < 2 * LANE + GAP + 4 ? "feed" : null;
+    if (!lane || x < 0 || x > box.width) return setTip(null);
+    // Fixed to the viewport so the scrolling timeline doesn't clip it.
+    setTip({ x: e.clientX, y: box.top + (lane === "light" ? 0 : LANE + GAP), lines: explain(t0 + (x / box.width) * SPAN, lane) });
+  };
+
   return (
     <section className="hcard hcard--pad tl" aria-label={`${tomorrow ? "Tomorrow" : "Today"} on the Mile timeline`}>
       <div className="hcard__head">
@@ -336,7 +394,15 @@ function Timeline({
             <span className="label" style={{ height: 22 }}>Light</span>
             <span className="label" style={{ height: 22 }}>Feeding</span>
           </div>
-          <div className="tl__lanes">
+          <div
+            className="tl__lanes"
+            ref={lanesRef}
+            onPointerMove={onPointer}
+            onPointerDown={onPointer}
+            onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}
+            // On a phone, a tap on the bars explains them instead of following the card's link.
+            onClick={(e) => touched.current && e.preventDefault()}
+          >
             <div className="tl__stack">
               <div className="tl__light">
                 <i className="twi" style={{ left: `${pos(day.sun.dawn)}%`, width: `${wid(day.sun.dawn, day.sun.rise)}%` }} />
@@ -349,7 +415,6 @@ function Timeline({
                     key={p.center}
                     className={p.kind}
                     style={{ left: `${pos(p.start)}%`, width: `${wid(p.start, p.end)}%` }}
-                    title={`${p.why}: ${fmtTime(p.start)}–${fmtTime(p.end)}`}
                   />
                 ))}
               </div>
@@ -363,6 +428,26 @@ function Timeline({
                 </span>
               </>
             )}
+            {tip &&
+              createPortal(
+                <div
+                  className="tl__tip"
+                  role="tooltip"
+                  style={{
+                    left: tip.x,
+                    top: tip.y,
+                    transform: `translate(${tip.x < 160 ? "-12%" : tip.x > window.innerWidth - 160 ? "-88%" : "-50%"}, calc(-100% - 10px))`,
+                  }}
+                >
+                  {tip.lines.map((l) => (
+                    <p key={l.head}>
+                      <strong>{l.head}</strong>
+                      <span>{l.body}</span>
+                    </p>
+                  ))}
+                </div>,
+                document.body,
+              )}
             <div className="mono tl__ticks">
               {ticks.map((h) => (
                 <span key={h} style={{ left: `${((h - 6) / 16) * 100}%` }} data-edge={h === 6 ? "start" : h === 22 ? "end" : undefined}>

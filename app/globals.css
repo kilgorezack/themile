@@ -2778,6 +2778,37 @@ a.hcard:hover {
   background: color-mix(in srgb, var(--river) 7%, transparent);
   pointer-events: none;
 }
+.tl__lanes {
+  cursor: help;
+  touch-action: pan-x;
+}
+.tl__tip {
+  position: fixed;
+  z-index: 50;
+  width: max-content;
+  max-width: 280px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.tl__tip p {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.tl__tip strong {
+  font-weight: 600;
+}
+.tl__tip span {
+  opacity: 0.8;
+}
 .tl__now {
   position: absolute;
   top: -10px;
