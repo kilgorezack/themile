@@ -53,6 +53,7 @@ async function sendToSubscribers(alert: Alert) {
 
 async function send(alert: Alert, tokens: { token: string; path: string }[]) {
   let ok = 0, failed = 0, removed = 0;
+  const errors = new Set<string>();
   for (let i = 0; i < tokens.length; i += 500) {
     const batch = tokens.slice(i, i + 500);
     const message: MulticastMessage = {
@@ -67,6 +68,7 @@ async function send(alert: Alert, tokens: { token: string; path: string }[]) {
     const out = await getMessaging().sendEachForMulticast(message);
     ok += out.successCount;
     failed += out.failureCount;
+    for (const r of out.responses) if (r.error) errors.add(r.error.code);
     // Forget tokens Apple/Google say are gone (app deleted, signed out elsewhere, etc.).
     const dead = out.responses
       .map((r, j) => ({ r, t: batch[j] }))
@@ -76,7 +78,19 @@ async function send(alert: Alert, tokens: { token: string; path: string }[]) {
     await Promise.all(dead.map(({ t }) => db.doc(t.path).delete()));
     removed += dead.length;
   }
-  return { devices: tokens.length, ok, failed, removed };
+  if (errors.size) logger.warn("push failures", { kind: alert.kind, failed, errors: [...errors] });
+  return { devices: tokens.length, ok, failed, removed, errors: [...errors] };
+}
+
+/** What to tell the person when a test reached none of their devices. */
+function testFailureMessage(errors: string[]): string {
+  if (errors.includes("messaging/third-party-auth-error")) {
+    return "Apple didn't accept the notification. The server's push setup needs fixing; try again later.";
+  }
+  if (errors.some((e) => e === "messaging/registration-token-not-registered" || e === "messaging/invalid-registration-token")) {
+    return "This iPhone's notification registration expired. Reopen Milecast and try again.";
+  }
+  return "The test couldn't be delivered. Try again in a minute.";
 }
 
 /**
@@ -106,5 +120,10 @@ export const testPush = onRequest({ region: REGION, cors: false, memory: "256MiB
     { kind: "flow", title: "Milecast notifications are on", body: "This is a test. Alerts you turn on will arrive like this.", link: "milecast://home" },
     devices.docs.map((d) => ({ token: d.id, path: d.ref.path })),
   );
+  // FCM answers per device; a test that reached none of them is a failure.
+  if (result.ok === 0) {
+    res.status(502).json({ ...result, error: testFailureMessage(result.errors) });
+    return;
+  }
   res.json(result);
 });
