@@ -2328,9 +2328,6 @@ h3 {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.profd__sync {
-  text-align: right;
-}
 
 .authd__links button {
   background: none;

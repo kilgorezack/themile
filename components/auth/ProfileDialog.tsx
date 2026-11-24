@@ -240,7 +240,6 @@ export function ProfileDialog() {
                   />
                 </label>
               ))}
-              <p className="muted small">Sent to your iPhone by the Milecast app.</p>
             </fieldset>
 
             <fieldset>
@@ -274,7 +273,6 @@ export function ProfileDialog() {
                 {busy ? "Saving…" : "Save"}
               </button>
             </div>
-            <p className="muted small profd__sync">Changes show up in the Milecast app too.</p>
           </form>
         )}
       </div>
