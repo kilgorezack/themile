@@ -30,7 +30,7 @@ export function Footer({ fetchedAt }: { source?: string | null; fetchedAt: strin
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
           </span>
-          <span className="mono">Updated {updated} MT · preliminary data</span>
+          <span className="mono">Updated {updated} MT</span>
         </div>
         <p className="footer__recaptcha">
           This site is protected by reCAPTCHA. The Google{" "}
