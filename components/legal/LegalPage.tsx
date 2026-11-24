@@ -6,7 +6,7 @@ import { Footer } from "../Footer";
 export const LEGAL = {
   company: "Summit Labs",
   brand: "Milecast",
-  site: "themile.summitlabs.one",
+  site: "mile.fish",
   email: "support@summitlabs.one",
   effective: "November 23, 2026",
   governingState: "Wyoming",
