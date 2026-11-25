@@ -76,7 +76,7 @@ service cloud.firestore {
 
     // App Store subscription as the iOS app last saw it, including Apple's
     // signed transaction (`jws`). This is a record only: it never grants
-    // anything. A server verifies `jws` with Apple and then sets `plan` on the
+    // anything. The verifyAppStorePurchase function (functions/src/appStore.ts) checks `jws` with Apple and then sets `plan` on the
     // profile, which clients still can't write.
     function validAppStore(d) {
       return d.keys().hasOnly([

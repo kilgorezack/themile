@@ -57,6 +57,41 @@ Microsoft Clarity and Firebase (Analytics) load on the full site via `app/layout
 
 Keys are only ever used server-side; nothing is exposed to the browser. With no keys set the site still works using the nearest NWS observation station.
 
+## App Store subscriptions (Cloud Functions)
+
+Milecast One bought in the iOS app sets `plan: "one"` on the profile, so it
+works here too. `functions/src/appStore.ts`:
+
+- `verifyAppStorePurchase` runs when the app writes
+  `users/{uid}/subscriptions/appStore`: checks Apple's signature, the product,
+  and that the purchase was made with this account, then sets `plan`.
+- `appStoreNotifications` receives App Store Server Notifications V2
+  (renewals, expiries, refunds).
+- `expireLapsedPlans` checks lapsed subscriptions with Apple once a day.
+
+Everything is logged in Firestore (server-only): `appStoreSubscriptions/{originalTransactionId}`
+(current state), `appStoreEvents` (every purchase, renewal, notification and
+plan change) and `appStoreAccountTokens` (matches notifications to accounts).
+
+Setup, once:
+
+1. App Store Connect → Users and Access → Integrations → In-App Purchase:
+   generate a key. Then store it:
+   ```bash
+   firebase functions:secrets:set APP_STORE_ISSUER_ID
+   firebase functions:secrets:set APP_STORE_KEY_ID
+   firebase functions:secrets:set APP_STORE_PRIVATE_KEY < SubscriptionKey_XXXXXXXXXX.p8
+   ```
+2. `firebase deploy --only functions` asks for `APP_STORE_APP_APPLE_ID`: the
+   number under App Store Connect → the app → App Information → Apple ID.
+3. App Store Connect → the app → App Information → App Store Server
+   Notifications: set the Production and Sandbox URLs to the deployed
+   `appStoreNotifications` URL (Version 2).
+
+Sandbox purchases (TestFlight, App Review) count too, so the whole flow can be
+tested before launch. Purchases from Xcode's local StoreKit testing are logged
+but never grant anything.
+
 ## Local development
 
 ```bash
