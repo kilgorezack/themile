@@ -48,7 +48,7 @@ Authentication → Sign-in method → **Add new provider** → **Apple** → Ena
   - Private key: open the `.p8` in a text editor and paste all of it, including the BEGIN/END lines
 - Save
 
-Authentication → Settings → **Authorized domains** should already include `themile.summitlabs.one`.
+Authentication → Settings → **Authorized domains** should include `mile.fish` and `www.mile.fish` (and `themile.summitlabs.one` while it still redirects).
 
 ## 5. Email relay (so emails reach "Hide My Email" users)
 

@@ -104,6 +104,49 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    // Push notification devices: one document per FCM registration token,
+    // written by the app on this device and read only by the alert sender
+    // (Admin SDK). Removed on sign-out.
+    function validDevice(d, token) {
+      return d.keys().hasOnly(['token', 'platform', 'appVersion', 'tz', 'updatedAt'])
+        && d.token == token
+        && d.platform in ['ios', 'web']
+        && optString(d, 'appVersion', 32)
+        && optString(d, 'tz', 64)
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid}/devices/{token} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && token.size() <= 4096 && validDevice(request.resource.data, token);
+    }
+
+    // A push the iOS app received from outside the alert sender (e.g. a
+    // Firebase console campaign), saved by the app under `push-<message id>`.
+    function validReceivedPush(d) {
+      return d.keys().hasOnly(['kind', 'title', 'body', 'link', 'read', 'createdAt'])
+        && d.kind == 'message'
+        && d.title is string && d.title.size() <= 200
+        && d.body is string && d.body.size() <= 4000
+        && optString(d, 'link', 500)
+        && d.read is bool
+        && d.createdAt is timestamp && d.createdAt <= request.time;
+    }
+
+    // Notification inbox: a copy of each alert sent to this person, written
+    // by the alert sender (Admin SDK), plus pushes the app received from
+    // elsewhere. The owner can read, delete, and flip `read`; the app can
+    // add received pushes, and nothing else.
+    match /users/{uid}/notifications/{id} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && id.matches('push-[A-Za-z0-9:_.-]{1,200}')
+        && validReceivedPush(request.resource.data);
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read is bool;
+    }
+
     // Everything else is closed unless a rule above opens it.
     match /{document=**} {
       allow read, write: if false;

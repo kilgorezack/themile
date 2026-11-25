@@ -16,11 +16,20 @@ import {
   type User,
 } from "firebase/auth";
 import { firebaseApp } from "@/lib/firebase";
+import { watchProfile, type Profile } from "@/lib/profile";
 
 interface AuthState {
   user: User | null;
   /** true until Firebase has told us whether someone is signed in */
   loading: boolean;
+  /** the shared app/website profile (Firestore users/{uid}), live; null until loaded or when signed out */
+  profile: Profile | null;
+  /** the Edit profile dialog */
+  profileOpen: boolean;
+  openProfile: () => void;
+  closeProfile: () => void;
+  /** call after changing the Firebase Auth name/photo in place */
+  userChanged: () => void;
   /** the sign-in dialog, shared so any page can open it */
   dialogOpen: boolean;
   openSignIn: () => void;
@@ -40,6 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rev, setRev] = useState(0); // bumps when the profile changes in place
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     const auth = getAuth(firebaseApp());
@@ -49,6 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (u) setDialogOpen(false);
     });
   }, []);
+
+  // Follow the profile document live, so changes saved in the iOS app show up here without a reload.
+  const uid = user?.uid;
+  useEffect(() => {
+    setProfile(null);
+    if (!user) {
+      setProfileOpen(false);
+      return;
+    }
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    watchProfile(user, setProfile, (e) => console.warn("[profile] not loaded:", (e as Error)?.message ?? e))
+      .then((unsub) => (cancelled ? unsub() : (stop = unsub)))
+      .catch((e) => console.warn("[profile] not loaded:", e?.message ?? e));
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
 
   const popupOrRedirect = useCallback(async (provider: GoogleAuthProvider | OAuthProvider) => {
     const auth = getAuth(firebaseApp());
@@ -82,6 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       loading,
+      profile,
+      profileOpen,
+      openProfile: () => setProfileOpen(true),
+      closeProfile: () => setProfileOpen(false),
+      userChanged: () => setRev((r) => r + 1),
       dialogOpen,
       openSignIn: () => setDialogOpen(true),
       closeSignIn: () => setDialogOpen(false),
@@ -105,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, loading, dialogOpen, signInWithGoogle, signInWithApple, rev],
+    [user, loading, profile, profileOpen, dialogOpen, signInWithGoogle, signInWithApple, rev],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

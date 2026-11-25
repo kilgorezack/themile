@@ -79,6 +79,7 @@ export async function GET() {
           conditions: cur.conditions,
           lightning3h: cur.lightning?.count3h ?? null,
           lightningLastMi: cur.lightning?.lastDistanceMi ?? null,
+          lightningLastAt: cur.lightning?.lastEpoch != null ? cur.lightning.lastEpoch * 1000 : null,
         }
       : null,
     flow: flow

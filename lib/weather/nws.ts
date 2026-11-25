@@ -11,7 +11,7 @@ const { office, x, y } = MILE.nwsGrid;
 async function get<T>(path: string, revalidate: number): Promise<T> {
   const res = await fetch(BASE + path, {
     headers: {
-      "User-Agent": `(themile, ${process.env.NWS_CONTACT ?? "themile.fish"})`,
+      "User-Agent": `(themile, ${process.env.NWS_CONTACT ?? "mile.fish"})`,
       Accept: "application/geo+json",
     },
     next: { revalidate },

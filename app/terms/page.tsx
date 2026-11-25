@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage, LEGAL, Mail } from "@/components/legal/LegalPage";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — Milecast",
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  absoluteTitle: "Terms of Service — Milecast",
   description: "The terms for using the Milecast website and iOS app, including subscriptions and how to use conditions data safely.",
-};
+  path: "/terms",
+});
 
 const sections = [
   {

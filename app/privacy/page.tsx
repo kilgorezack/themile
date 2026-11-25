@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage, LEGAL, Mail } from "@/components/legal/LegalPage";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — Milecast",
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
+  absoluteTitle: "Privacy Policy — Milecast",
   description: "What Milecast collects on the website and iOS app, why, who it's shared with, and how to delete it.",
-};
+  path: "/privacy",
+});
 
 const sections = [
   {
@@ -55,6 +58,13 @@ const sections = [
             <strong>Usage analytics.</strong> We use analytics from Google Cloud Platform to count visits, screens and features used,
             and an analytics service from Microsoft Corporation on the website to see how pages are used through heatmaps and
             session replays (clicks, scrolling and mouse movement). Text you type into forms is masked.
+          </li>
+          <li>
+            <strong>Bot and abuse protection.</strong> The website uses Google reCAPTCHA, through Google Cloud Platform, to
+            check that requests to sign-in and account services come from a real browser. reCAPTCHA collects hardware and
+            software information, such as device and browser data, and sends it to Google for analysis. Google&rsquo;s{" "}
+            <a href="https://policies.google.com/privacy">Privacy Policy</a> and{" "}
+            <a href="https://policies.google.com/terms">Terms of Service</a> apply to it.
           </li>
           <li>
             <strong>Device and log data.</strong> Like most websites, the services that run Milecast receive
@@ -111,7 +121,7 @@ const sections = [
         </p>
         <ul>
           <li>
-            <strong>Google Cloud Platform</strong>: sign-in, your profile database, photo storage and analytics.
+            <strong>Google Cloud Platform</strong>: sign-in, your profile database, photo storage, analytics and reCAPTCHA bot protection.
           </li>
           <li>
             <strong>Google</strong> and <strong>Apple</strong>: if you sign in with them.
