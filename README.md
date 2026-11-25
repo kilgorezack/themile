@@ -59,8 +59,10 @@ Keys are only ever used server-side; nothing is exposed to the browser. With no 
 
 ## App Store subscriptions (Cloud Functions)
 
-Milecast One bought in the iOS app sets `plan: "one"` on the profile, so it
-works here too. `functions/src/appStore.ts`:
+Milecast One bought in the iOS app sets `plan: "one"` and `tier` on the
+profile, so it works here too. `tier` is `free`, `one_monthly` or
+`one_annual`; new profiles start on `free` (`setStartingTier`). Only the
+server writes `plan` and `tier`. `functions/src/appStore.ts`:
 
 - `verifyAppStorePurchase` runs when the app writes
   `users/{uid}/subscriptions/appStore`: checks Apple's signature, the product,

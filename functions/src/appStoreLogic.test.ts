@@ -64,3 +64,19 @@ test("older news never overwrites newer", () => {
   // Same transaction, earlier news arriving late: ignored.
   assert.ok(!isNewer({ transactionId: "2", expiresAt: 200, signedDate: 30 }, { lastTransactionId: "2", expiresAt: 200, signedDate: 40 }));
 });
+
+test("tier on the profile", () => {
+  const { tierFor, planForTier } = require("./appStoreLogic");
+  assert.equal(tierFor([]), "free");
+  assert.equal(tierFor([{ state: "expired", productId: "one.milecast.yearly" }]), "free");
+  assert.equal(tierFor([{ state: "active", productId: "one.milecast.monthly" }]), "one_monthly");
+  assert.equal(tierFor([{ state: "grace", productId: "one.milecast.yearly" }]), "one_annual");
+  assert.equal(tierFor([
+    { state: "active", productId: "one.milecast.monthly" },
+    { state: "active", productId: "one.milecast.yearly" },
+  ]), "one_annual");
+  assert.equal(tierFor([{ state: "billing_retry", productId: "one.milecast.monthly" }]), "free");
+  assert.equal(planForTier("free"), "free");
+  assert.equal(planForTier("one_monthly"), "one");
+  assert.equal(planForTier("one_annual"), "one");
+});

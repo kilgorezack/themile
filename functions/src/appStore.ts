@@ -12,8 +12,8 @@
 //   appStoreAccountTokens/{appAccountToken}        token → uid, to match Apple's notifications
 //
 // These collections are server-only (the rules' catch-all denies clients).
-// Only `plan` is ever written to a profile: the profile rules allow no other
-// server fields.
+// Only `plan` and `tier` are ever written to a profile: the profile rules
+// allow no other server fields.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -28,18 +28,19 @@ import {
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { defineInt } from "firebase-functions/params";
-import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onRequest } from "firebase-functions/v2/https";
 import {
   BUNDLE_ID,
   PRODUCTS,
   accountToken,
   isNewer,
-  planFor,
+  planForTier,
   sameToken,
   stateFromStatus,
   stateFromTransaction,
   stateOverrideForNotification,
+  tierFor,
   type SubState,
 } from "./appStoreLogic";
 
@@ -183,17 +184,38 @@ export async function saveSubscription(
   return owner;
 }
 
-/** Sets `plan` from all of the user's App Store subscriptions. Never recreates a deleted profile. */
+/**
+ * Sets `tier` (free | one_monthly | one_annual) and `plan` (free | one) from
+ * all of the user's App Store subscriptions. Never recreates a deleted profile.
+ */
 export async function syncPlan(uid: string, source: string) {
   const subs = await db().collection("appStoreSubscriptions").where("uid", "==", uid).get();
-  const plan = planFor(subs.docs.map((d) => (d.data() as StoredSub).state));
+  const tier = tierFor(subs.docs.map((d) => d.data() as StoredSub));
+  const plan = planForTier(tier);
   const profile = db().collection("users").doc(uid);
   const snap = await profile.get();
-  if (!snap.exists || snap.get("plan") === plan) return;
-  await profile.update({ plan });
-  await logEvent(`plan-${uid}-${Date.now()}`, { type: "PLAN_CHANGED", uid, plan, source });
-  logger.info("plan changed", { uid, plan, source });
+  if (!snap.exists || (snap.get("plan") === plan && snap.get("tier") === tier)) return;
+  await profile.update({ plan, tier });
+  await logEvent(`plan-${uid}-${Date.now()}`, { type: "PLAN_CHANGED", uid, plan, tier, source });
+  logger.info("plan changed", { uid, plan, tier, source });
 }
+
+/**
+ * New profiles start on the free tier, so every profile says which tier it's
+ * on. Only fills in what's missing: a purchase verified first wins.
+ */
+export const setStartingTier = onDocumentCreated(
+  { document: "users/{uid}", region: REGION, memory: "256MiB" },
+  async (event) => {
+    const ref = event.data?.ref;
+    if (!ref) return;
+    await db().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists || snap.get("tier")) return;
+      tx.update(ref, { tier: "free", plan: snap.get("plan") ?? "free" });
+    });
+  },
+);
 
 // MARK: 1. The app saved a purchase
 

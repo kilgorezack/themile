@@ -78,3 +78,20 @@ export function isNewer(
 export function planFor(states: SubState[]): "one" | "free" {
   return states.some(grantsOne) ? "one" : "free";
 }
+
+/** Which plan someone is on, shown on the profile as `tier`. */
+export type Tier = "free" | "one_monthly" | "one_annual";
+
+/**
+ * The tier from all of a user's App Store subscriptions. If both are somehow
+ * active (switching plans), yearly wins.
+ */
+export function tierFor(subs: { state: SubState; productId?: string | null }[]): Tier {
+  const live = subs.filter((s) => grantsOne(s.state));
+  if (live.some((s) => s.productId === "one.milecast.yearly")) return "one_annual";
+  if (live.length) return "one_monthly";
+  return "free";
+}
+
+/** `plan` always follows the tier: any paid tier is Milecast One. */
+export const planForTier = (tier: Tier): "one" | "free" => (tier === "free" ? "free" : "one");
