@@ -168,4 +168,13 @@ export const testPush = onRequest({ region: REGION, cors: false, memory: "256MiB
 });
 
 // App Store subscriptions → profile plan (see appStore.ts).
-export { verifyAppStorePurchase, appStoreNotifications, expireLapsedPlans } from "./appStore";
+import * as appStore from "./appStore";
+export const verifyAppStorePurchase = appStore.verifyAppStorePurchase;
+export const appStoreNotifications = appStore.appStoreNotifications;
+// The daily check needs the App Store Server API key in Firebase secrets, and
+// Firebase won't deploy anything while a declared secret is missing. Set
+// APP_STORE_DAILY_CHECK=on in .env.the-mile-2c303 once the secrets exist.
+if (process.env.APP_STORE_DAILY_CHECK === "on") {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  exports.expireLapsedPlans = require("./appStoreDaily").expireLapsedPlans;
+}

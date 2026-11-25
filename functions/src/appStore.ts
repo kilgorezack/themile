@@ -3,7 +3,7 @@
 //
 //   verifyAppStorePurchase  the app saved a purchase (users/{uid}/subscriptions/appStore)
 //   appStoreNotifications   Apple tells us about renewals, expiries and refunds
-//   expireLapsedPlans       daily check for anything that lapsed quietly
+//   expireLapsedPlans       daily check for anything that lapsed quietly (appStoreDaily.ts)
 //
 // Every purchase and notification is logged to Firestore:
 //
@@ -18,7 +18,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  AppStoreServerAPIClient,
   Environment,
   SignedDataVerifier,
   VerificationException,
@@ -28,10 +27,9 @@ import {
 } from "@apple/app-store-server-library";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import { defineInt, defineSecret } from "firebase-functions/params";
+import { defineInt } from "firebase-functions/params";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onRequest } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
   BUNDLE_ID,
   PRODUCTS,
@@ -45,18 +43,12 @@ import {
   type SubState,
 } from "./appStoreLogic";
 
-const REGION = "us-central1";
+export const REGION = "us-central1";
 
 /** The app's Apple ID: App Store Connect → the app → App Information → Apple ID. */
 const APP_APPLE_ID = defineInt("APP_STORE_APP_APPLE_ID", {
   description: "Milecast's Apple ID (the number under App Store Connect → App Information)",
 });
-
-// App Store Server API key (App Store Connect → Users and Access → Integrations → In-App Purchase).
-// Only the daily check uses it, to ask Apple for the current status.
-const ISSUER_ID = defineSecret("APP_STORE_ISSUER_ID");
-const KEY_ID = defineSecret("APP_STORE_KEY_ID");
-const PRIVATE_KEY = defineSecret("APP_STORE_PRIVATE_KEY");
 
 const db = () => getFirestore();
 
@@ -65,7 +57,7 @@ const db = () => getFirestore();
 let rootCerts: Buffer[] | undefined;
 const verifiers = new Map<Environment, SignedDataVerifier>();
 
-function verifier(env: Environment): SignedDataVerifier {
+export function verifier(env: Environment): SignedDataVerifier {
   let v = verifiers.get(env);
   if (!v) {
     rootCerts ??= ["AppleRootCA-G3.cer", "AppleRootCA-G2.cer"].map((f) => readFileSync(join(__dirname, "..", "certs", f)));
@@ -76,7 +68,7 @@ function verifier(env: Environment): SignedDataVerifier {
   return v;
 }
 
-function environmentOf(raw: unknown): Environment | undefined {
+export function environmentOf(raw: unknown): Environment | undefined {
   return raw === Environment.PRODUCTION || raw === Environment.SANDBOX ? raw : undefined;
 }
 
@@ -94,7 +86,7 @@ async function verifyEither<T>(decode: (v: SignedDataVerifier) => Promise<T>): P
 
 // MARK: Firestore
 
-type StoredSub = {
+export type StoredSub = {
   uid: string | null;
   productId: string;
   environment: string;
@@ -104,11 +96,11 @@ type StoredSub = {
   signedDate?: number;
 };
 
-const ms = (t?: Timestamp) => t?.toMillis();
+export const ms = (t?: Timestamp) => t?.toMillis();
 const ts = (n?: number) => (n ? Timestamp.fromMillis(n) : null);
 
 /** Logs one event. Ids are stable (txn-…, ntf-…), so a retried delivery is logged once. Returns false if already logged. */
-async function logEvent(id: string, data: Record<string, unknown>): Promise<boolean> {
+export async function logEvent(id: string, data: Record<string, unknown>): Promise<boolean> {
   try {
     await db().collection("appStoreEvents").doc(id).create({ ...data, loggedAt: FieldValue.serverTimestamp() });
     return true;
@@ -119,7 +111,7 @@ async function logEvent(id: string, data: Record<string, unknown>): Promise<bool
 }
 
 /** The purchase itself, for the log: what was bought, when, for how much. */
-function transactionLog(t: JWSTransactionDecodedPayload) {
+export function transactionLog(t: JWSTransactionDecodedPayload) {
   return {
     transactionId: t.transactionId ?? null,
     originalTransactionId: t.originalTransactionId ?? null,
@@ -142,7 +134,7 @@ function transactionLog(t: JWSTransactionDecodedPayload) {
  * Saves a subscription's state unless a newer one is already stored, then
  * brings the owner's plan in line. Returns the uid it belongs to, if known.
  */
-async function saveSubscription(
+export async function saveSubscription(
   t: JWSTransactionDecodedPayload,
   state: SubState,
   uid: string | null,
@@ -181,7 +173,7 @@ async function saveSubscription(
 }
 
 /** Sets `plan` from all of the user's App Store subscriptions. Never recreates a deleted profile. */
-async function syncPlan(uid: string, source: string) {
+export async function syncPlan(uid: string, source: string) {
   const subs = await db().collection("appStoreSubscriptions").where("uid", "==", uid).get();
   const plan = planFor(subs.docs.map((d) => (d.data() as StoredSub).state));
   const profile = db().collection("users").doc(uid);
@@ -314,61 +306,3 @@ export const appStoreNotifications = onRequest({ region: REGION, cors: false, me
     res.status(500).send("Try again");
   }
 });
-
-// MARK: 3. Daily check
-
-/**
- * Once a day: anything still counted as Milecast One whose period ended more
- * than an hour ago gets checked with Apple's App Store Server API, in case a
- * notification never arrived.
- */
-export const expireLapsedPlans = onSchedule(
-  {
-    schedule: "every day 04:00",
-    timeZone: "America/Denver",
-    region: REGION,
-    memory: "256MiB",
-    secrets: [ISSUER_ID, KEY_ID, PRIVATE_KEY],
-  },
-  async () => {
-    const cutoff = Timestamp.fromMillis(Date.now() - 60 * 60 * 1000);
-    const due = await db().collection("appStoreSubscriptions").where("expiresAt", "<", cutoff).get();
-    const clients = new Map<Environment, AppStoreServerAPIClient>();
-    const client = (env: Environment) => {
-      let c = clients.get(env);
-      if (!c) {
-        c = new AppStoreServerAPIClient(PRIVATE_KEY.value(), KEY_ID.value(), ISSUER_ID.value(), BUNDLE_ID, env);
-        clients.set(env, c);
-      }
-      return c;
-    };
-
-    let checked = 0;
-    for (const doc of due.docs) {
-      const sub = doc.data() as StoredSub;
-      if (!["active", "grace", "billing_retry"].includes(sub.state)) continue;
-      const env = environmentOf(sub.environment) ?? Environment.PRODUCTION;
-      checked++;
-      try {
-        const statuses = await client(env).getAllSubscriptionStatuses(doc.id);
-        const last = statuses.data?.flatMap((g) => g.lastTransactions ?? []).find((l) => l.originalTransactionId === doc.id);
-        if (!last?.signedTransactionInfo) continue;
-        const t = await verifier(env).verifyAndDecodeTransaction(last.signedTransactionInfo);
-        const state = stateFromStatus(last.status) ?? stateFromTransaction(t, Date.now());
-        await logEvent(`check-${doc.id}-${new Date().toISOString().slice(0, 10)}`, {
-          type: "DAILY_CHECK", uid: sub.uid, status: last.status ?? null, state, ...transactionLog(t),
-        });
-        await saveSubscription(t, state, sub.uid, Date.now(), "daily-check");
-      } catch (e) {
-        // Apple unreachable or the key is wrong: only expire once it's clearly over.
-        logger.warn("status check failed", { originalTransactionId: doc.id, error: String(e) });
-        const ended = ms(sub.expiresAt) ?? 0;
-        if (Date.now() - ended > 3 * 24 * 60 * 60 * 1000) {
-          await doc.ref.update({ state: "expired", updatedBy: "daily-check:fallback", updatedAt: FieldValue.serverTimestamp() });
-          if (sub.uid) await syncPlan(sub.uid, "daily-check:fallback");
-        }
-      }
-    }
-    logger.info("daily App Store check done", { due: due.size, checked });
-  },
-);
