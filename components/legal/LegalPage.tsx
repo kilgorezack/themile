@@ -8,6 +8,8 @@ export const LEGAL = {
   brand: "Milecast",
   site: "mile.fish",
   email: "support@summitlabs.one",
+  /** Mailing address shown on the EULA (Apple asks for one). Empty: not shown. */
+  address: "",
   effective: "November 23, 2026",
   governingState: "Wyoming",
 };

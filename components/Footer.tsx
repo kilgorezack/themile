@@ -29,6 +29,7 @@ export function Footer({ fetchedAt }: { source?: string | null; fetchedAt: strin
             </span>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
+            <a href="/eula">EULA</a>
           </span>
           <span className="mono">Updated {updated} MT</span>
         </div>
