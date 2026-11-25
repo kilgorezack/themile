@@ -72,17 +72,28 @@ export function environmentOf(raw: unknown): Environment | undefined {
   return raw === Environment.PRODUCTION || raw === Environment.SANDBOX ? raw : undefined;
 }
 
-/** Tries Production, then Sandbox (TestFlight and App Review purchases are Sandbox). */
-async function verifyEither<T>(decode: (v: SignedDataVerifier) => Promise<T>): Promise<{ value: T; env: Environment }> {
+/**
+ * Verifies a notification against the environment it says it's from
+ * (TestFlight and App Review are Sandbox). The claim is only used to pick the
+ * verifier; the verifier then checks Apple's signature and that the
+ * environment matches. Trying Production first doesn't work: Sandbox
+ * notifications carry no app Apple ID, so Production rejects them as the
+ * wrong app before it ever looks at the environment.
+ */
+async function verifyNotification(signedPayload: string) {
+  let claimed: unknown;
   try {
-    return { value: await decode(verifier(Environment.PRODUCTION)), env: Environment.PRODUCTION };
-  } catch (e) {
-    if (e instanceof VerificationException && e.status === VerificationStatus.INVALID_ENVIRONMENT) {
-      return { value: await decode(verifier(Environment.SANDBOX)), env: Environment.SANDBOX };
-    }
-    throw e;
+    const body = JSON.parse(Buffer.from(signedPayload.split(".")[1] ?? "", "base64url").toString("utf8"));
+    claimed = body?.data?.environment ?? body?.summary?.environment ?? body?.externalPurchaseToken?.environment;
+  } catch {
+    // Not a JWS at all; the verifier below rejects it.
   }
+  const env = claimed === Environment.SANDBOX ? Environment.SANDBOX : Environment.PRODUCTION;
+  return { value: await verifier(env).verifyAndDecodeNotification(signedPayload), env };
 }
+
+const describe = (e: unknown) =>
+  e instanceof VerificationException ? `VerificationException ${VerificationStatus[e.status] ?? e.status}` : String(e);
 
 // MARK: Firestore
 
@@ -213,8 +224,8 @@ export const verifyAppStorePurchase = onDocumentWritten(
     try {
       t = await verifier(env).verifyAndDecodeTransaction(jws);
     } catch (e) {
-      logger.warn("app purchase failed verification", { uid, error: String(e) });
-      await logEvent(`bad-${uid}-${Date.now()}`, { type: "VERIFICATION_FAILED", uid, source: "app", error: String(e) });
+      logger.warn("app purchase failed verification", { uid, error: describe(e) });
+      await logEvent(`bad-${uid}-${Date.now()}`, { type: "VERIFICATION_FAILED", uid, source: "app", error: describe(e) });
       return;
     }
     if (!t.productId || !PRODUCTS.includes(t.productId)) return;
@@ -252,9 +263,9 @@ export const appStoreNotifications = onRequest({ region: REGION, cors: false, me
   let notification;
   let env: Environment;
   try {
-    ({ value: notification, env } = await verifyEither((v) => v.verifyAndDecodeNotification(signedPayload)));
+    ({ value: notification, env } = await verifyNotification(signedPayload));
   } catch (e) {
-    logger.warn("notification failed verification", { error: String(e) });
+    logger.warn("notification failed verification", { error: describe(e) });
     res.status(400).send("Invalid signature");
     return;
   }
