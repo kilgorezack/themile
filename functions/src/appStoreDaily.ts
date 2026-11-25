@@ -1,7 +1,7 @@
 // Daily check of App Store subscriptions with Apple's App Store Server API.
 // Kept apart from appStore.ts because it needs the API key in Firebase
 // secrets, and Firebase won't deploy anything while a declared secret is
-// missing. index.ts only loads this when APP_STORE_DAILY_CHECK=on.
+// missing.
 
 import { AppStoreServerAPIClient, Environment } from "@apple/app-store-server-library";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";

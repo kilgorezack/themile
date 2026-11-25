@@ -82,12 +82,10 @@ Setup, once:
    firebase functions:secrets:set APP_STORE_KEY_ID
    firebase functions:secrets:set APP_STORE_PRIVATE_KEY < SubscriptionKey_XXXXXXXXXX.p8
    ```
-2. Turn on the daily check: set `APP_STORE_DAILY_CHECK=on` in
-   `functions/.env.the-mile-2c303` (it stays off until the secrets exist,
-   because Firebase won't deploy anything while a declared secret is
-   missing), then `firebase deploy --only functions`. The app's Apple ID
+2. `firebase deploy --only functions`. The app's Apple ID
    (`APP_STORE_APP_APPLE_ID`, the number after `/apps/` in its App Store
-   Connect URL) is already in that file.
+   Connect URL) is in `functions/.env.the-mile-2c303`. Firebase won't deploy
+   any function while one of the three secrets is missing.
 3. App Store Connect → the app → App Information → App Store Server
    Notifications: set the Production and Sandbox URLs to the deployed
    `appStoreNotifications` URL (Version 2).
