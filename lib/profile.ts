@@ -31,6 +31,8 @@ export interface Profile {
   alerts: { flow: boolean; calm: boolean; lightning: boolean; outlook: boolean };
   /** "free" | "one", written by the server only */
   plan?: string;
+  /** "free" | "one_monthly" | "one_annual", written by the server only */
+  tier?: string;
   /** whether the document exists yet */
   exists: boolean;
 }
@@ -96,6 +98,7 @@ export function readProfile(data: Record<string, unknown> | undefined, user: Use
       outlook: bool(a.outlook, false),
     },
     plan: str(d.plan),
+    tier: str(d.tier),
     exists: data !== undefined,
   };
   if (!p.email && user.email) p.email = user.email;

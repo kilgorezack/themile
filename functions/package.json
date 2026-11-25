@@ -2,13 +2,16 @@
   "name": "milecast-functions",
   "private": true,
   "main": "lib/index.js",
-  "engines": { "node": "22" },
+  "engines": {
+    "node": "22"
+  },
   "scripts": {
     "build": "tsc",
-    "test": "tsc && node --test lib/alerts.test.js",
+    "test": "tsc && node --test lib/alerts.test.js lib/appStoreLogic.test.js",
     "deploy": "firebase deploy --only functions"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "^3.1.0",
     "firebase-admin": "^13.5.0",
     "firebase-functions": "^7.0.0"
   },

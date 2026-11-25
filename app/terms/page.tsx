@@ -219,6 +219,10 @@ const sections = [
     title: "Apple App Store terms",
     body: (
       <>
+        <p>
+          The Milecast app and Milecast One subscriptions bought in it are also covered by our{" "}
+          <a href="/eula">End User License Agreement</a>.
+        </p>
         <p>If you use the Milecast iPhone app:</p>
         <ul>
           <li>

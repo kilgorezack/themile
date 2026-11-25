@@ -166,3 +166,7 @@ export const testPush = onRequest({ region: REGION, cors: false, memory: "256MiB
   }
   res.json(result);
 });
+
+// App Store subscriptions → profile plan (see appStore.ts and appStoreDaily.ts).
+export { verifyAppStorePurchase, appStoreNotifications, setStartingTier } from "./appStore";
+export { expireLapsedPlans } from "./appStoreDaily";

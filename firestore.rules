@@ -2,8 +2,9 @@ rules_version = '2';
 
 // Milecast / The Mile — one account shared by the website and the iOS app.
 // Profiles live at users/{uid}. Each user can read and write only their own,
-// with every field type- and size-checked. `plan` (free | one) is written only
-// by the server (Admin SDK: StoreKit / Stripe webhooks), never by clients.
+// with every field type- and size-checked. `plan` (free | one) and `tier`
+// (free | one_monthly | one_annual) are written only by the server (Admin SDK:
+// the App Store functions), never by clients.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -43,7 +44,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
           'firstName', 'lastName', 'displayName', 'email', 'photoURL',
           'fishing', 'alerts', 'dashboardLayout',
-          'createdVia', 'createdAt', 'updatedAt', 'onboardedAt', 'plan'
+          'createdVia', 'createdAt', 'updatedAt', 'onboardedAt', 'plan', 'tier'
         ])
         && optString(d, 'firstName', 60)
         && optString(d, 'lastName', 60)
@@ -56,7 +57,9 @@ service cloud.firestore {
         && (!('createdVia' in d) || d.createdVia in ['ios', 'web'])
         && (!('createdAt' in d) || d.createdAt is timestamp)
         && (!('updatedAt' in d) || d.updatedAt is timestamp)
-        && (!('onboardedAt' in d) || d.onboardedAt is timestamp);
+        && (!('onboardedAt' in d) || d.onboardedAt is timestamp)
+        // Server-set: free, one_monthly or one_annual.
+        && (!('tier' in d) || d.tier in ['free', 'one_monthly', 'one_annual']);
     }
 
     match /users/{uid} {
@@ -64,19 +67,20 @@ service cloud.firestore {
 
       allow create: if isOwner(uid)
         && validProfile(request.resource.data)
-        && !('plan' in request.resource.data);
+        && !('plan' in request.resource.data)
+        && !('tier' in request.resource.data);
 
-      // createdAt / createdVia are set once; plan only ever changes server-side.
+      // createdAt / createdVia are set once; plan and tier only ever change server-side.
       allow update: if isOwner(uid)
         && validProfile(request.resource.data)
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'createdAt', 'createdVia']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'tier', 'createdAt', 'createdVia']);
 
       allow delete: if isOwner(uid);
     }
 
     // App Store subscription as the iOS app last saw it, including Apple's
     // signed transaction (`jws`). This is a record only: it never grants
-    // anything. A server verifies `jws` with Apple and then sets `plan` on the
+    // anything. The verifyAppStorePurchase function (functions/src/appStore.ts) checks `jws` with Apple and then sets `plan` on the
     // profile, which clients still can't write.
     function validAppStore(d) {
       return d.keys().hasOnly([
