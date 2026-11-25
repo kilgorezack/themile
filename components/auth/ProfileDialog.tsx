@@ -20,7 +20,7 @@ import {
  * up on the other.
  */
 export function ProfileDialog() {
-  const { user, profile, profileOpen, closeProfile, userChanged } = useAuth();
+  const { user, profile, profileOpen, profileWelcome: welcome, closeProfile, userChanged } = useAuth();
   const ref = useRef<HTMLDialogElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<Profile | null>(null);
@@ -98,7 +98,8 @@ export function ProfileDialog() {
         <button type="button" className="authd__close" aria-label="Close" onClick={closeProfile}>
           ×
         </button>
-        <h2 id="profd-title">Edit profile</h2>
+        <h2 id="profd-title">{welcome ? "Welcome to Milecast" : "Edit profile"}</h2>
+        {welcome && <p className="muted small">Tell us a little about how you fish. You can change this any time under Edit profile.</p>}
 
         {!p ? (
           <p className="muted small">{user ? "Loading your profile…" : "Sign in to edit your profile."}</p>
@@ -242,22 +243,24 @@ export function ProfileDialog() {
               ))}
             </fieldset>
 
-            <fieldset>
-              <legend>Plan</legend>
-              <div className="profd__plan">
-                {p.plan === "one" ? (
-                  <>
-                    <span>Milecast One</span>
-                    <strong className="profd__active">Active</strong>
-                  </>
-                ) : (
-                  <>
-                    <span>Free</span>
-                    <a href="/pricing">See Milecast One</a>
-                  </>
-                )}
-              </div>
-            </fieldset>
+            {!welcome && (
+              <fieldset>
+                <legend>Plan</legend>
+                <div className="profd__plan">
+                  {p.plan === "one" ? (
+                    <>
+                      <span>Milecast One</span>
+                      <strong className="profd__active">Active</strong>
+                    </>
+                  ) : (
+                    <>
+                      <span>Free</span>
+                      <a href="/pricing">See Milecast One</a>
+                    </>
+                  )}
+                </div>
+              </fieldset>
+            )}
 
             {error && (
               <p className="authd__error" role="alert">
@@ -267,10 +270,10 @@ export function ProfileDialog() {
 
             <div className="profd__actions">
               <button type="button" className="btn" onClick={closeProfile}>
-                Cancel
+                {welcome ? "Skip for now" : "Cancel"}
               </button>
               <button type="submit" className="btn btn--solid" disabled={busy || uploading || !p.firstName.trim()}>
-                {busy ? "Saving…" : "Save"}
+                {busy ? "Saving…" : welcome ? "Save and continue" : "Save"}
               </button>
             </div>
           </form>

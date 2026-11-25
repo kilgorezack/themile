@@ -122,7 +122,11 @@ export async function watchProfile(user: User, onChange: (p: Profile) => void, o
   const ref = doc(await db(), "users", user.uid);
   return onSnapshot(
     ref,
-    (snap) => onChange(readProfile(snap.exists() ? snap.data() : undefined, user)),
+    (snap) => {
+      // A missing document read only from the local cache may just not have arrived yet.
+      if (!snap.exists() && snap.metadata.fromCache) return;
+      onChange(readProfile(snap.exists() ? snap.data() : undefined, user));
+    },
     onError,
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   getAuth,
@@ -26,6 +26,8 @@ interface AuthState {
   profile: Profile | null;
   /** the Edit profile dialog */
   profileOpen: boolean;
+  /** the profile dialog was opened automatically for a new account ("finish your profile") */
+  profileWelcome: boolean;
   openProfile: () => void;
   closeProfile: () => void;
   /** call after changing the Firebase Auth name/photo in place */
@@ -51,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [rev, setRev] = useState(0); // bumps when the profile changes in place
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileWelcome, setProfileWelcome] = useState(false);
+  const welcomed = useRef<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth(firebaseApp());
@@ -80,6 +84,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
+
+  // New account with no profile yet (the iOS app creates one at sign-up, the
+  // website didn't): ask for the same details once. Skipping is remembered on
+  // this browser, so it doesn't come back on every page.
+  useEffect(() => {
+    if (!user || !profile || profile.exists || welcomed.current === user.uid) return;
+    welcomed.current = user.uid;
+    if (readSkip(user.uid)) return;
+    setProfileWelcome(true);
+    setProfileOpen(true);
+  }, [user, profile]);
 
   const popupOrRedirect = useCallback(async (provider: GoogleAuthProvider | OAuthProvider) => {
     const auth = getAuth(firebaseApp());
@@ -115,8 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       profile,
       profileOpen,
-      openProfile: () => setProfileOpen(true),
-      closeProfile: () => setProfileOpen(false),
+      profileWelcome,
+      openProfile: () => {
+        setProfileWelcome(false);
+        setProfileOpen(true);
+      },
+      closeProfile: () => {
+        if (profileWelcome && user && !profile?.exists) writeSkip(user.uid);
+        setProfileWelcome(false);
+        setProfileOpen(false);
+      },
       userChanged: () => setRev((r) => r + 1),
       dialogOpen,
       openSignIn: () => setDialogOpen(true),
@@ -141,10 +164,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, loading, profile, profileOpen, dialogOpen, signInWithGoogle, signInWithApple, rev],
+    [user, loading, profile, profileOpen, profileWelcome, dialogOpen, signInWithGoogle, signInWithApple, rev],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+const skipKey = (uid: string) => `milecast:profile-skipped:${uid}`;
+function readSkip(uid: string) {
+  try {
+    return localStorage.getItem(skipKey(uid)) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeSkip(uid: string) {
+  try {
+    localStorage.setItem(skipKey(uid), "1");
+  } catch {
+    /* private mode: they may be asked again next visit */
+  }
 }
 
 export function useAuth() {
