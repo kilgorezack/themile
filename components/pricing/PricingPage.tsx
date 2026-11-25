@@ -14,9 +14,12 @@ const PRICE = {
 } as const;
 
 const FEATURES: { label: string; free: boolean; one: boolean }[] = [
-  { label: "Home: today's read, key readings, best window", free: true, one: true },
-  { label: "Conditions: the full report", free: true, one: true },
+  { label: "Today's read: the call, key readings, best window", free: true, one: true },
   { label: "Low-data page for weak signal", free: true, one: true },
+  { label: "Full Conditions report", free: false, one: true },
+  { label: "Wind hour by hour, plus the 7-day forecast", free: false, one: true },
+  { label: "Kortes releases, flow and reservoir trends", free: false, one: true },
+  { label: "Light, feeding windows and hatches", free: false, one: true },
   { label: "Customizable dashboard", free: false, one: true },
   { label: "Field map: dams, reservoirs and gauges", free: false, one: true },
   { label: "Satellite map", free: false, one: true },
@@ -25,11 +28,11 @@ const FEATURES: { label: string; free: boolean; one: boolean }[] = [
 const FAQ = [
   {
     q: "What do I get for free?",
-    a: "The home page, the full Conditions report and the low-data page. Conditions needs a free account, which takes a few seconds with Google, Apple or email.",
+    a: "Today's read: whether it's worth going, the readings that matter right now and the best window to fish, plus the low-data page for one bar of signal. A free account takes a few seconds with Google, Apple or email.",
   },
   {
     q: "What does Milecast One add?",
-    a: "Everything on the site: a dashboard you can arrange your way, and the map from Seminoe to Alcova with every dam and gauge, as a field map or satellite.",
+    a: "The full Conditions report: wind hour by hour, the 7-day forecast, what Kortes is letting out and how flows are trending, light and feeding windows, and what's hatching. You also get a dashboard you can arrange your way and the map from Seminoe to Alcova, as a field map or satellite.",
   },
   {
     q: "Monthly or yearly?",
@@ -74,7 +77,7 @@ export function PricingPage({ serverNow }: { serverNow: number }) {
           <h1>
             Fish the Mile <em>smarter</em>
           </h1>
-          <p className="muted">Conditions are free. Milecast One unlocks the dashboard and maps.</p>
+          <p className="muted">Today&rsquo;s read is free. Milecast One gives you the full Conditions report, so you can plan the trip, not just the morning.</p>
 
           <div className="pricing__toggle" role="radiogroup" aria-label="Billing period">
             {(["monthly", "yearly"] as Billing[]).map((b) => (
@@ -92,21 +95,24 @@ export function PricingPage({ serverNow }: { serverNow: number }) {
             <div className="plan__price">
               <span className="num">$0</span>
             </div>
-            <p className="plan__note">With a free account.</p>
+            <p className="plan__note">The quick read before you go.</p>
             <ul className="plan__list">
               <li>
-                <Check on /> Home page
+                <Check on /> Today&rsquo;s read: go or wait
               </li>
               <li>
-                <Check on /> Conditions: the full report
+                <Check on /> Wind, water and weather right now
+              </li>
+              <li>
+                <Check on /> Best window to fish today
               </li>
               <li>
                 <Check on /> Low-data page
               </li>
             </ul>
             {user ? (
-              <a className="btn plan__cta" href="/conditions">
-                Go to Conditions
+              <a className="btn plan__cta" href="/">
+                See today&rsquo;s read
               </a>
             ) : (
               <button type="button" className="btn plan__cta" onClick={openSignIn}>
@@ -118,7 +124,7 @@ export function PricingPage({ serverNow }: { serverNow: number }) {
           <div className="plan plan--one">
             <div className="plan__top">
               <div className="plan__name">Milecast One</div>
-              <span className="plan__badge">Full access</span>
+              <span className="plan__badge">The full report</span>
             </div>
             <div className="plan__price">
               <span className="num">{p.amount}</span>
@@ -128,6 +134,18 @@ export function PricingPage({ serverNow }: { serverNow: number }) {
             <ul className="plan__list">
               <li>
                 <Check on /> Everything in Free
+              </li>
+              <li>
+                <Check on /> The full Conditions report
+              </li>
+              <li>
+                <Check on /> Wind hour by hour and the 7-day forecast
+              </li>
+              <li>
+                <Check on /> Kortes releases and flow trends
+              </li>
+              <li>
+                <Check on /> Light, feeding windows and hatches
               </li>
               <li>
                 <Check on /> Customizable dashboard
